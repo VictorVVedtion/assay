@@ -71,6 +71,22 @@ def _rec(seq=0, *, model="gpt-4o", req_messages=None, resp_content=PARIS,
     }
 
 
+def test_token_recount_survives_subprocess_then_load():
+    # Regression: tiktoken's lazy plugin import can raise a transient
+    # "inspect has no attribute getmodulename" right after a subprocess call if
+    # it hasn't been imported yet. The cached loader retries once. Reproduce the
+    # condition by clearing the encoding cache and calling after a subprocess.
+    import subprocess
+    from assay_analyzer.checks import token_recount as tr
+
+    tr._ENC_CACHE.clear()
+    subprocess.run(["true"], capture_output=True)
+    import tiktoken
+    honest = len(tiktoken.get_encoding("o200k_base").encode(PARIS))
+    v = check_token_recount(_rec(claimed_completion=honest), {"tolerance_pct": 4.0})
+    assert v["status"] != "error", v
+
+
 def test_token_recount_honest_within_tolerance():
     # tiktoken counts PARIS at ~28 tokens; claim a close, honest number.
     import tiktoken

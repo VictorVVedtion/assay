@@ -28,6 +28,35 @@ from .base import Verdict, new_verdict
 
 CHECK = "token_recount"
 
+# Cache of loaded tiktoken encodings, keyed by encoding name. Loading is cached
+# both to avoid repeated disk/BPE work and to make load failures robust: tiktoken
+# lazily imports its encoding plugins via importlib on first touch, and in some
+# interpreter states (observed after a subprocess call) that first touch raises a
+# transient "module 'inspect' has no attribute 'getmodulename'" — a known
+# import-machinery race. A one-time retry clears it. Discovered when validating
+# against genuine api.openai.com traffic (synthetic tests imported tiktoken
+# earlier, so they never hit the race).
+_ENC_CACHE: dict[str, object] = {}
+
+
+def _load_encoding(encoding: str):
+    """Load (and cache) a tiktoken encoding, retrying once past the transient
+    lazy-import race. Returns the encoding or raises the second failure."""
+    if encoding in _ENC_CACHE:
+        return _ENC_CACHE[encoding]
+    import tiktoken
+
+    last_exc = None
+    for _ in range(2):
+        try:
+            enc = tiktoken.get_encoding(encoding)
+            _ENC_CACHE[encoding] = enc
+            return enc
+        except (AttributeError, ImportError) as e:
+            last_exc = e  # transient import-machinery race; retry once
+    raise last_exc
+
+
 # Ordered prefix → tiktoken encoding. Data-driven so new models are a config/data
 # change, never a code change (PHASE0.md §6.4). Unknown → skip.
 _ENCODING_PREFIXES: list[tuple[str, str]] = [
@@ -190,8 +219,7 @@ def check_token_recount(rec: dict, cfg: dict[str, Any] | None = None) -> Verdict
         return skip(f"unknown/non-openai model {model!r}")
 
     try:
-        import tiktoken
-        enc = tiktoken.get_encoding(encoding)
+        enc = _load_encoding(encoding)
     except Exception as e:  # noqa: BLE001 — tiktoken missing or encoding load failed
         return new_verdict(rec, CHECK, "error", "info", f"tiktoken unavailable: {e}",
                            {"reason": "tiktoken_error", "encoding": encoding})
