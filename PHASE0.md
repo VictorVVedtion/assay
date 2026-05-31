@@ -211,7 +211,7 @@ detail:`{resp_fingerprint,normalized_len,distinct_request_count,first_seen_recor
 ### 6.3 throughput —— 仅 telemetry [RT:detection]
 计 `tokens_per_s = completion_tokens_used / gen_us`、`ttft`。Phase 0 **默认 `status:"info"`**,只对**物理不可能**(超极保守硬上限)才 `flag`。建每端点自身基线用于异常对比 [DEFER],不与绝对 ceiling 死磕。
 
-detail:`{completion_tokens_used,gen_us,tokens_per_s,ttft_us,model_class_ceiling_tps,flag,reason}`
+detail:`{completion_tokens_used,gen_us,tokens_per_s,ttft_us,ceiling_tps,flag,reason}`(注:emit 出的字段是 `ceiling_tps`;`model_class_ceiling_tps` 仅为 §8 config 的输入键,throughput.py 据此算出 `ceiling_tps`。以 throughput.py / lib/types.ts 为准)
 
 ### 6.4 tiktoken 模型→encoding 前缀表 [RT:api]
 有序前缀匹配 + 安全兜底:`o1*/o3*/o4*/gpt-4o*/gpt-4.1*/gpt-5* → o200k_base`;`gpt-4*/gpt-3.5* → cl100k_base`;`text-embedding-3* → cl100k_base`。**未知模型 → skip(不臆测)**。pin tiktoken 版本;`encoding_for_model` KeyError → skip。表集中、数据驱动、单测。
