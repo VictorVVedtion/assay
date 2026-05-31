@@ -1,0 +1,31 @@
+# assay (照妖镜) — local-first deployment. Your prompts/outputs never leave this machine.
+#
+#   1. cp assay.example.yaml assay.yaml   (set evidence/verdicts paths under /data, e.g. /data/evidence.jsonl)
+#   2. edit assay.yaml: upstreams[].target = your 中转站 base URL
+#   3. docker compose up -d
+#   4. point your app:  OPENAI_BASE_URL=http://localhost:8080/v1
+
+services:
+  proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.proxy
+    command: ["proxy", "--config", "/etc/assay/assay.yaml"]
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./assay.yaml:/etc/assay/assay.yaml:ro
+      - ./data:/data
+    restart: unless-stopped
+
+  analyzer:
+    build:
+      context: .
+      dockerfile: Dockerfile.analyzer
+    command: ["run", "--config", "/etc/assay/assay.yaml"]
+    volumes:
+      - ./assay.yaml:/etc/assay/assay.yaml:ro
+      - ./data:/data
+    depends_on:
+      - proxy
+    restart: unless-stopped

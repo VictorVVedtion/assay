@@ -1,0 +1,39 @@
+# assay (照妖镜) — example config. Copy to assay.yaml and edit.
+# For docker compose, point the paths at the mounted /data volume (see comments).
+
+listen: ":8080"
+fail_open: true                       # MVP: always true. The auditor never blocks your request.
+
+upstreams:
+  - path_prefix: "/"                  # MVP: route everything to one upstream
+    target: "https://your-relay.example.com"   # <-- your 中转站 base URL
+    forward_auth: true                # pass the client's Authorization header through unchanged
+
+capture:
+  max_body_bytes: 2097152             # 2 MiB cap per side; beyond this -> truncate + flag
+  store_response_raw: true
+
+evidence:
+  path: "./data/evidence.jsonl"       # docker: /data/evidence.jsonl
+  # Headers redacted before writing. Evidence holds PLAINTEXT prompts/outputs — keep it local.
+  # set-cookie is redacted too: upstreams (e.g. Anthropic via Cloudflare) set
+  # session cookies in responses that are secrets, not provenance signal.
+  redact_headers: ["authorization", "x-api-key", "api-key", "x-goog-api-key", "cookie", "set-cookie", "proxy-authorization"]
+  # Scrub credential-SHAPED strings from stored request/response BODIES before
+  # they touch disk, so assay's own evidence log isn't a durable copy of your
+  # keys. The real secret still reaches the relay (storage-only); the hash chain
+  # is computed over the scrubbed bytes. Catches credential shapes ONLY, not
+  # prose/code/PII. Default true; set false to store bodies verbatim.
+  scrub_body_secrets: true
+
+analyzer:
+  verdicts_path: "./data/verdicts.jsonl"          # docker: /data/verdicts.jsonl
+  checkpoint_path: "./data/analyzer.checkpoint"    # last processed seq; resumable
+  token_recount:
+    tolerance_pct: 3.0
+  cache_replay:
+    min_normalized_len: 64
+  throughput:
+    model_class_ceiling_tps:
+      default: 250
+      "gpt-4o": 180

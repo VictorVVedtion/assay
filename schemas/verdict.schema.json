@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/assay-sh/assay/schemas/verdict.schema.json",
+  "title": "VerdictRecord",
+  "description": "A derived, reproducible verdict from one check on one EvidenceRecord. Append-only in verdicts.jsonl; NOT part of the evidence hash chain. See PHASE0.md §5-§6.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["v", "record_id", "record_seq", "record_hash", "check", "analyzer_version", "ts", "status", "severity", "summary", "detail"],
+  "properties": {
+    "v": { "const": 1 },
+    "record_id": { "type": "string" },
+    "record_seq": { "type": "integer", "minimum": 0 },
+    "record_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "binds verdict to exact evidence -> reproducible" },
+    "check": { "enum": ["token_recount", "provenance", "exposure", "cache_replay", "throughput"] },
+    "analyzer_version": { "type": "string" },
+    "ts": { "type": "string", "format": "date-time" },
+    "status": { "enum": ["ok", "flag", "skip", "error"] },
+    "severity": { "enum": ["info", "warn", "critical"] },
+    "summary": { "type": "string" },
+    "detail": {
+      "type": "object",
+      "description": "per-check payload; shapes documented in PHASE0.md §6 (token_recount / cache_replay / throughput)"
+    }
+  }
+}

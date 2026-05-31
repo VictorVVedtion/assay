@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/assay-sh/assay/schemas/evidence.schema.json",
+  "title": "EvidenceRecord",
+  "description": "One immutable, hash-chained record of a single proxied request/response. Append-only in evidence.jsonl. See PHASE0.md §3-§4.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["v", "seq", "id", "ts_start", "prev_hash", "hash", "route", "request", "response", "timing", "capture"],
+  "properties": {
+    "v": { "const": 1 },
+    "seq": { "type": "integer", "minimum": 0, "description": "monotonic sequence from 0" },
+    "id": { "type": "string", "description": "uuidv7" },
+    "ts_start": { "type": "string", "format": "date-time", "description": "RFC3339Nano; when proxy received the client request" },
+    "prev_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "sha256 of previous record's hash; genesis = 64x'0'" },
+    "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "sha256(JCS(record without 'hash'))" },
+    "route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "path", "upstream", "claimed_model"],
+      "properties": {
+        "method": { "type": "string" },
+        "path": { "type": "string" },
+        "upstream": { "type": "string" },
+        "claimed_model": { "type": ["string", "null"], "description": "from request body.model" }
+      }
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["headers", "raw", "bytes", "truncated"],
+      "properties": {
+        "headers": { "type": "object", "description": "forwarded headers; Authorization/x-api-key/etc redacted to 'REDACTED'" },
+        "raw": { "type": "string", "description": "exact request body, UTF-8, stored raw (not re-serialized)" },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "truncated": { "type": "boolean" }
+      }
+    },
+    "response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "headers", "stream", "raw", "bytes", "truncated"],
+      "properties": {
+        "status": { "type": "integer" },
+        "headers": { "type": "object" },
+        "stream": { "type": "boolean" },
+        "raw": { "type": "string", "description": "non-stream: exact body; stream: exact concatenated SSE bytes" },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "truncated": { "type": "boolean" },
+        "claimed_usage": {
+          "type": ["object", "null"],
+          "description": "UNTRUSTED; relay-reported usage",
+          "properties": {
+            "prompt_tokens": { "type": "integer" },
+            "completion_tokens": { "type": "integer" },
+            "total_tokens": { "type": "integer" }
+          }
+        },
+        "claimed_model": { "type": ["string", "null"], "description": "UNTRUSTED; model echoed in response" },
+        "system_fingerprint": { "type": ["string", "null"], "description": "UNTRUSTED" }
+      }
+    },
+    "timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ttft_ms", "total_ms", "stream_chunks"],
+      "properties": {
+        "ttft_ms": { "type": ["number", "null"], "description": "request sent -> first response byte/chunk" },
+        "total_ms": { "type": ["number", "null"] },
+        "stream_chunks": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "capture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tee_ok"],
+      "properties": {
+        "tee_ok": { "type": "boolean", "description": "fail-open: false if capture had issues (user still served)" },
+        "note": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

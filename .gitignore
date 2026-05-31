@@ -1,0 +1,28 @@
+# data — contains PLAINTEXT prompts/outputs; never commit
+/data/*
+!/data/.gitkeep
+
+# Go
+/assay
+/bin/
+*.test
+*.out
+coverage.*
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+dist/
+build/
+
+# editors / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
