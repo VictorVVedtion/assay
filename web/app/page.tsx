@@ -66,7 +66,7 @@ export default function ConsolePage() {
         </div>
       </div>
 
-      {/* global right-side drawer (opens when an evidence row / chain block is clicked) */}
+      {/* app-wide drawer: opens on evidence row or chain block click */}
       <EvidenceDrawer />
     </div>
   );

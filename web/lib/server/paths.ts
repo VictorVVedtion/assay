@@ -15,7 +15,9 @@ export function dataDir(): string {
   const configured = process.env.ASSAY_DATA_DIR ?? "../data";
   return path.isAbsolute(configured)
     ? configured
-    : path.join(process.cwd(), configured);
+    : // turbopackIgnore: the data dir is resolved at runtime (often "../data",
+      // i.e. the repo root); without this, NFT traces the whole parent repo.
+      path.join(/* turbopackIgnore: true */ process.cwd(), configured);
 }
 
 /** Absolute path to evidence.jsonl. */

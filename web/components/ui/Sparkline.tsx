@@ -6,6 +6,19 @@
 
 import { cn } from "@/lib/cn";
 
+/** Stable string→base36 hash (FNV-1a) for deterministic SVG ids. Avoids
+ *  Math.random() in render, which is impure and desyncs SSR vs client (and
+ *  trips react-hooks/purity). Identical inputs yield an identical, and thus
+ *  safely shareable, gradient id. */
+function hash36(s: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0).toString(36);
+}
+
 export interface SparklineProps {
   /** y values, oldest→newest. */
   data: number[];
@@ -59,7 +72,7 @@ export function Sparkline({
     path = `M${pad},${y} L${(w - pad).toFixed(2)},${y}`;
   }
 
-  const gradId = `spark-${Math.random().toString(36).slice(2, 8)}`;
+  const gradId = `spark-${hash36(`${color}|${w}x${h}|${data.join(",")}`)}`;
 
   return (
     <svg
