@@ -1,0 +1,74 @@
+# CI for assay (照妖镜). Runs the full suite on every push and PR so the
+# project's core promise — "anyone can reproduce the verdict from raw bytes" —
+# is publicly, automatically demonstrated. Go data plane + cross-language digest
+# parity + Python analysis-plane checks.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    name: Go data plane
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache: true
+      - name: go vet
+        run: go vet ./...
+      - name: gofmt (must be clean)
+        run: |
+          unformatted=$(gofmt -l cmd internal)
+          if [ -n "$unformatted" ]; then
+            echo "These files need gofmt:"; echo "$unformatted"; exit 1
+          fi
+      - name: go test
+        run: go test ./... -count=1
+
+  python:
+    name: Python analysis plane
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: install analyzer
+        run: |
+          python -m pip install --upgrade pip
+          pip install ./analyzer
+      - name: digest cross-language parity (Python reproduces Go vectors)
+        run: python analyzer/tests/test_digest.py
+      - name: check unit tests
+        run: PYTHONPATH=analyzer python analyzer/tests/test_checks.py
+      - name: provenance tests
+        run: PYTHONPATH=analyzer python analyzer/tests/test_provenance.py
+      - name: exposure tests
+        run: PYTHONPATH=analyzer python analyzer/tests/test_exposure.py
+
+  digest-parity:
+    name: Go writes vectors, Python verifies (cross-impl gate)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: regenerate digest vectors from Go
+        run: UPDATE_VECTORS=1 go test ./internal/evidence/ -run TestDigestVectors -count=1
+      - name: Python must reproduce them byte-for-byte
+        run: python analyzer/tests/test_digest.py
+      - name: vectors must be unchanged (committed == generated)
+        run: git diff --exit-code testdata/digest_vectors.json

@@ -1,5 +1,7 @@
 # assay · 照妖镜
 
+[![ci](https://github.com/VictorVVedtion/assay/actions/workflows/ci.yml/badge.svg)](https://github.com/VictorVVedtion/assay/actions/workflows/ci.yml)
+
 > 给 LLM 中转站照个原形。**独立、开源、自托管**地核验你买到的**用量**和**模型身份**是否名副其实——不信任中转站后台,不用交出 root 账号。
 >
 > *Independent, self-hosted verification that an LLM API relay (“中转站”) actually delivers the model and the token usage you pay for.*
