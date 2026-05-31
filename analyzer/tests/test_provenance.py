@@ -103,6 +103,43 @@ def test_genuine_openai_shape_passes():
     assert v["detail"]["expected_upstream"] == "openai"
 
 
+def test_antimarker_rebuilt_envelope_flags_strongly():
+    # Real shape from a relay serving native /v1/messages: id is a plain UUID
+    # (not msg_...) AND a conversationId field genuine Anthropic never returns.
+    # Even with no positive markers, this is a POSITIVE masquerade tell.
+    headers = {"content-type": ["application/json"], "x-new-api-version": ["v0.13.1"]}
+    body = json.dumps({
+        "id": "cf95709c-1ce5-4167-898e-1da975a8e194",
+        "conversationId": "cf95709c-1ce5-4167-898e-1da975a8e194",
+        "model": "claude-opus-4-7", "type": "message", "role": "assistant",
+        "content": [{"type": "text", "text": "PONG"}],
+        "usage": {"input_tokens": 31, "output_tokens": 2},
+    })
+    v = check_provenance(_rec(model="claude-opus-4-7", headers=headers, body=body,
+                              provider="anthropic", surface="messages"))
+    assert v["status"] == "flag", v
+    assert v["detail"]["antimarkers"], "expected anti-markers to fire"
+    assert "REBUILT" in v["summary"] or "rebuilt" in v["summary"]
+    # both the UUID-id and the forbidden conversationId should be detected
+    assert any("conversationId" in a for a in v["detail"]["antimarkers"])
+    assert any("msg_" in a for a in v["detail"]["antimarkers"])
+
+
+def test_genuine_msg_id_does_not_trigger_antimarker():
+    # A genuine msg_ id with normal fields must NOT be flagged as rebuilt, even
+    # if a UUID appears elsewhere (e.g. inside content).
+    headers = dict(GENUINE_ANTHROPIC_HEADERS)
+    body = json.dumps({
+        "id": "msg_01Hn5gbS6ZhCZjCVcHx95tCh", "model": "claude-haiku-4-5-20251001",
+        "content": [{"type": "text", "text": "ref cf95709c-1ce5-4167-898e-1da975a8e194"}],
+        "usage": {"input_tokens": 5, "output_tokens": 3},
+    })
+    v = check_provenance(_rec(model="claude-haiku-4-5-20251001", headers=headers, body=body,
+                              provider="anthropic", surface="messages"))
+    assert not v["detail"]["antimarkers"], v["detail"]["antimarkers"]
+    assert v["status"] == "ok", v
+
+
 def test_deepseek_has_no_signature_lib_skips():
     v = check_provenance(_rec(model="deepseek-chat", headers={}, body="{}"))
     assert v["status"] == "skip"
