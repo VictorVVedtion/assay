@@ -5,7 +5,43 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strconv"
 )
+
+// parsePromptID strictly parses a JSON prompt-id key. It REJECTS any
+// non-canonical form (leading zeros, sign, whitespace, unicode digits, trailing
+// junk) by requiring the int to round-trip back to the exact key string — so
+// "01", "+1", " 1", "1x", and the Arabic-Indic "١" do NOT all collapse to 1,
+// which would make the signed samples digest nondeterministic (redteam
+// blocker #2).
+func parsePromptID(k string) (int, error) {
+	pid, err := strconv.Atoi(k)
+	if err != nil {
+		return 0, fmt.Errorf("non-integer prompt id %q in reference", k)
+	}
+	if strconv.Itoa(pid) != k {
+		return 0, fmt.Errorf("non-canonical prompt id %q (must be a plain base-10 integer)", k)
+	}
+	return pid, nil
+}
+
+// samplesFromBlob parses all prompt ids strictly and detects duplicates.
+func samplesFromBlob(rb *refBlob) (map[int][]string, int, error) {
+	samples := map[int][]string{}
+	n := 0
+	for k, v := range rb.Samples {
+		pid, err := parsePromptID(k)
+		if err != nil {
+			return nil, 0, err
+		}
+		if _, dup := samples[pid]; dup {
+			return nil, 0, fmt.Errorf("duplicate prompt id %d in reference", pid)
+		}
+		samples[pid] = v
+		n += len(v)
+	}
+	return samples, n, nil
+}
 
 // refBlob mirrors the reference JSON produced by `assay-analyzer build-reference`
 // (analyzer/assay_analyzer/reference.py). We read it to derive the signed
@@ -37,15 +73,9 @@ func FingerprintFromReferenceFile(path, collectedAt, method string) (*Fingerprin
 	if rb.Provider == "" || rb.Model == "" || rb.PromptPoolHash == "" {
 		return nil, nil, fmt.Errorf("reference missing provider/model/prompt_pool_hash")
 	}
-	samples := map[int][]string{}
-	n := 0
-	for k, v := range rb.Samples {
-		pid := 0
-		if _, err := fmt.Sscanf(k, "%d", &pid); err != nil {
-			return nil, nil, fmt.Errorf("non-integer prompt id %q in reference", k)
-		}
-		samples[pid] = v
-		n += len(v)
+	samples, n, err := samplesFromBlob(&rb)
+	if err != nil {
+		return nil, nil, err
 	}
 	fp := &Fingerprint{
 		Provider: rb.Provider, Model: rb.Model, ModelSnapshot: rb.ModelSnapshot,
@@ -65,11 +95,9 @@ func VerifyReferenceMatchesFingerprint(path string, fp *Fingerprint) error {
 	if err != nil {
 		return err
 	}
-	samples := map[int][]string{}
-	for k, v := range rb.Samples {
-		pid := 0
-		_, _ = fmt.Sscanf(k, "%d", &pid)
-		samples[pid] = v
+	samples, _, err := samplesFromBlob(rb) // strict parse; do NOT ignore the error (blocker #2)
+	if err != nil {
+		return err
 	}
 	if got := SamplesDigest(samples); got != fp.SamplesDigest {
 		return fmt.Errorf("reference samples digest %s… does not match signed fingerprint %s…",

@@ -50,6 +50,9 @@ def main(argv: list[str] | None = None) -> int:
     p_replay.add_argument("--reference", action="append", default=[],
                           help="path to a model_identity reference blob (repeatable); "
                                "enables model_identity batch verdicts on probe records")
+    p_replay.add_argument("--registry", help="signed registry.jsonl (gate references by quorum)")
+    p_replay.add_argument("--trust-root", help="trust_root.json (required with --registry)")
+    p_replay.add_argument("--revocations", help="optional revocations.json")
 
     p_report = sub.add_parser("report", help="render a scorecard from verdicts")
     p_report.add_argument("--verdicts", required=True)
@@ -85,8 +88,55 @@ def main(argv: list[str] | None = None) -> int:
         if args.reference:
             from .reference import load_reference
 
+            # If a registry+trust_root are supplied, ADMIT a reference blob only
+            # when its fingerprint reaches PASS quorum (>= threshold distinct
+            # vetted signers attest the IDENTICAL fingerprint). This is the
+            # zero-official-access buyer's trust path: they trust the reference
+            # because the curated community cross-signed it, not because they
+            # collected it. A non-quorum reference is REFUSED (not silently used).
+            gate = None
+            if args.registry:
+                if not args.trust_root:
+                    print("replay: --registry requires --trust-root", file=sys.stderr)
+                    return 2
+                import json as _json
+                import time as _time
+                from .registry import evaluate_quorum
+                trust_root = _json.loads(open(args.trust_root, encoding="utf-8").read())
+                statements = [_json.loads(ln) for ln in open(args.registry, encoding="utf-8")
+                              if ln.strip()]
+                revs = _json.loads(open(args.revocations).read()) if args.revocations else None
+                now_z = _time.strftime("%Y-%m-%dT%H:%M:%SZ", _time.gmtime())
+                gate = evaluate_quorum(statements, trust_root, revs, now_z)
+
             for rp in args.reference:
-                references[rp] = load_reference(rp)
+                blob = load_reference(rp)
+                if gate is not None:
+                    # Recompute the blob's fingerprint identity and require PASS.
+                    from .registry import fingerprint_id as _fpid, samples_digest as _sd
+                    samples = {int(k): v for k, v in blob.get("samples", {}).items()}
+                    fp = {
+                        "provider": blob.get("provider"), "model": blob.get("model"),
+                        "model_snapshot": blob.get("model_snapshot", ""),
+                        "precision": blob.get("precision", "reference"),
+                        "prompt_pool_hash": blob.get("prompt_pool_hash"),
+                        "sampling_params_hash": blob.get("sampling_params_hash"),
+                        "samples_digest": _sd(samples), "n_samples": sum(len(v) for v in samples.values()),
+                        "collected_at": blob.get("collected_at", ""),
+                        "collection_method": blob.get("collection_method", ""),
+                    }
+                    fid = _fpid(fp)
+                    g = gate.get(fid)
+                    if not g or g.get("status") != "PASS":
+                        status = g.get("status") if g else "NOT_IN_REGISTRY"
+                        print(f"replay: REFUSED reference {rp} — quorum {status} "
+                              f"(fingerprint {fid[:16]}…); not admitting an unattested reference",
+                              file=sys.stderr)
+                        continue
+                    print(f"replay: admitted {rp} — community quorum PASS "
+                          f"(K={len(g['vetted'])} vetted of {len(trust_root.get('keys', []))}, "
+                          f"threshold {g['threshold']}) — ATTESTATION, not proof", file=sys.stderr)
+                references[rp] = blob
         verdicts = replay(args.evidence, cfg, references)
         out = open(args.out, "w", encoding="utf-8") if args.out else sys.stdout
         try:

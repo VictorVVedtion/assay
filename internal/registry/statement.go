@@ -16,7 +16,19 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"sort"
+	"strings"
+
+	"golang.org/x/text/unicode/norm"
 )
+
+// normalizeCompletion MUST match analyzer normalize_completion (NFC + strip) so
+// the signed samples digest binds the SAME bytes the MMD kernel consumes — this
+// is what lets two independent collectors of the same model converge on one
+// FingerprintID (redteam blocker #3). strings.TrimSpace matches Python str.strip
+// for the ASCII+common-unicode whitespace both treat as space.
+func normalizeCompletion(s string) string {
+	return strings.TrimSpace(norm.NFC.String(s))
+}
 
 // StatementVersion is the signed-statement schema version. A bump changes the
 // signing preimage and invalidates old signatures, so bump only on a breaking
@@ -119,7 +131,10 @@ func SamplesDigest(samples map[int][]string) string {
 		var pidb [8]byte
 		binary.BigEndian.PutUint64(pidb[:], uint64(pid))
 		h.Write(pidb[:])
-		comps := append([]string(nil), samples[pid]...)
+		comps := make([]string, 0, len(samples[pid]))
+		for _, c := range samples[pid] {
+			comps = append(comps, normalizeCompletion(c)) // blocker #3: bind normalized bytes
+		}
 		sort.Strings(comps)
 		var n [8]byte
 		binary.BigEndian.PutUint64(n[:], uint64(len(comps)))

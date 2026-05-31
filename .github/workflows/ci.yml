@@ -74,11 +74,12 @@ jobs:
           python-version: "3.11"
       - name: regenerate digest vectors from Go
         run: UPDATE_VECTORS=1 go test ./internal/evidence/ -run TestDigestVectors -count=1
-      - name: regenerate registry signing vectors from Go
-        run: UPDATE_VECTORS=1 go test ./internal/registry/ -run TestEmitVectors -count=1
+      - name: regenerate registry signing + quorum vectors from Go
+        run: |
+          UPDATE_VECTORS=1 go test ./internal/registry/ -run 'TestEmitVectors|TestEmitQuorumVectors' -count=1
       - name: Python must reproduce digest vectors byte-for-byte
         run: python analyzer/tests/test_digest.py
-      - name: Python must verify Go-signed registry vectors
+      - name: Python must verify Go-signed registry + reproduce quorum verdicts
         run: PYTHONPATH=analyzer python analyzer/tests/test_registry.py
       - name: vectors must be unchanged (committed == generated)
-        run: git diff --exit-code testdata/digest_vectors.json testdata/registry_vectors.json
+        run: git diff --exit-code testdata/digest_vectors.json testdata/registry_vectors.json testdata/quorum_vectors.json

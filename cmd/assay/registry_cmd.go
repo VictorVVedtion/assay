@@ -49,9 +49,107 @@ func runReference(args []string) {
 		runReferenceSign(args[1:])
 	case "verify":
 		runReferenceVerify(args[1:])
+	case "quorum":
+		runReferenceQuorum(args[1:])
 	default:
-		fail("assay reference: unknown subcommand " + args[0] + " (want sign|verify)")
+		fail("assay reference: unknown subcommand " + args[0] + " (want sign|verify|quorum)")
 	}
+}
+
+// runReferenceQuorum evaluates the curated M-of-N trust rule over a registry and
+// reports, per fingerprint, the HONEST count (K distinct vetted of N) and a
+// status — never a boolean "genuine". Exit codes let scripts distinguish
+// fresh-quorum (0) from stale (10) from no-quorum (20) so stale is never treated
+// as proven.
+func runReferenceQuorum(args []string) {
+	fs := flag.NewFlagSet("reference quorum", flag.ExitOnError)
+	regPath := fs.String("registry", "", "registry.jsonl of signed statements (required)")
+	rootPath := fs.String("trust-root", "", "trust_root.json curated keyring (required)")
+	revPath := fs.String("revocations", "", "optional revocations.json")
+	model := fs.String("model", "", "optional: only report this model")
+	_ = fs.Parse(args)
+
+	if *regPath == "" || *rootPath == "" {
+		fail("reference quorum: --registry and --trust-root are required")
+	}
+	root, err := registry.LoadTrustRoot(*rootPath)
+	if err != nil {
+		fail("quorum: " + err.Error())
+	}
+	stmts, err := registry.LoadRegistry(*regPath)
+	if err != nil {
+		fail("quorum: " + err.Error())
+	}
+	var revs *registry.Revocations
+	if *revPath != "" {
+		revs, err = registry.LoadRevocations(*revPath)
+		if err != nil {
+			fail("quorum: " + err.Error())
+		}
+	}
+	now := time.Now().UTC()
+	// Verify+filter revocations (under-signed ones are ignored, fail-safe).
+	if revs != nil {
+		eff, _, verr := registry.VerifyTrustRoot(root, now)
+		if verr == nil {
+			if vr, rerr := registry.VerifyRevocations(revs, root, eff, now); rerr != nil {
+				fmt.Fprintf(os.Stderr, "⚠️  %v\n", rerr)
+				revs = nil
+			} else {
+				revs = vr
+			}
+		}
+	}
+	results, err := registry.EvaluateQuorum(registry.QuorumInput{
+		Statements: stmts, Root: root, Revocations: revs, Now: now,
+	})
+	if err != nil {
+		fail("quorum: " + err.Error())
+	}
+
+	worst := 0 // 0 fresh-pass, 10 stale, 20 no-quorum
+	any := false
+	for _, fq := range results {
+		if *model != "" && fq.Fingerprint.Model != *model {
+			continue
+		}
+		any = true
+		icon := map[registry.QuorumStatus]string{
+			registry.QuorumPass: "✅", registry.QuorumStale: "⚠️ ", registry.QuorumNone: "❌",
+		}[fq.Status]
+		fmt.Printf("%s %s  %s/%s  K=%d of %d vetted (quorum>=%d)",
+			icon, fq.Status, fq.Fingerprint.Provider, fq.Fingerprint.Model,
+			len(fq.VettedSigners), len(root.Keys), fq.Threshold)
+		if len(fq.CommunitySigners) > 0 {
+			fmt.Printf("  +%d community (not counted)", len(fq.CommunitySigners))
+		}
+		if len(fq.ExpiredVetted) > 0 {
+			fmt.Printf("  [%d expired]", len(fq.ExpiredVetted))
+		}
+		fmt.Printf("  fp %s…\n", fq.FingerprintID[:16])
+		if fq.Status == registry.QuorumStale && worst < 10 {
+			worst = 10
+		}
+		if fq.Status == registry.QuorumNone && worst < 20 {
+			worst = 20
+		}
+	}
+	if !any {
+		fmt.Println("no fingerprints in registry" + modelSuffix(*model))
+		worst = 20
+	}
+	fmt.Fprintln(os.Stderr,
+		"note: quorum = K vetted KEYS signed the identical fingerprint. assay cannot verify the "+
+			"humans behind the keys are independent; collusion or a shared poisoned upstream defeats "+
+			"this. ATTESTATION, not proof of genuineness.")
+	os.Exit(worst)
+}
+
+func modelSuffix(m string) string {
+	if m == "" {
+		return ""
+	}
+	return " for model " + m
 }
 
 // runReferenceSign turns a genuine reference blob (from `assay calibrate` +

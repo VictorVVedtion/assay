@@ -67,13 +67,23 @@ def fingerprint_id(f: dict[str, Any]) -> str:
     return hashlib.sha256(canon_fingerprint(f)).hexdigest()
 
 
+def _normalize_completion(text: str) -> str:
+    """MUST match registry.normalizeCompletion (Go) and
+    model_identity.normalize_completion: NFC + strip. The signed digest binds the
+    SAME normalized bytes the MMD kernel consumes, so two independent collectors
+    of the same model converge on one FingerprintID (redteam blocker #3)."""
+    import unicodedata
+    return unicodedata.normalize("NFC", text).strip()
+
+
 def samples_digest(samples: dict[int, list[str]]) -> str:
-    """Mirror of registry.SamplesDigest: order-invariant content digest."""
+    """Order-invariant content digest over NORMALIZED completions. Mirror of
+    registry.SamplesDigest (Go), byte-identical."""
     h = hashlib.sha256()
     h.update(b"assay-samples-v1")
     for pid in sorted(samples):
         h.update(_u64(pid))
-        comps = sorted(samples[pid])
+        comps = sorted(_normalize_completion(c) for c in samples[pid])
         h.update(_u64(len(comps)))
         for c in comps:
             cb = c.encode("utf-8")
@@ -137,25 +147,43 @@ def _decodeint(s: bytes) -> int:
 
 
 def _decodepoint(s: bytes):
-    y = int.from_bytes(s, "little") & ((1 << 255) - 1)
+    # CANONICAL decode (RFC 8032 + libsodium/Go strictness): the y-coordinate
+    # carried in the low 255 bits MUST be < q. Without this check a non-canonical
+    # encoding with y in [q, 2^255) decodes to a valid point here while Go's
+    # crypto/ed25519 REJECTS it — a verify divergence over the identical bytes
+    # (redteam blocker #1). Reject before recovering x.
+    raw = int.from_bytes(s, "little")
+    sign = raw >> 255
+    y = raw & ((1 << 255) - 1)
+    if y >= _q:
+        raise ValueError("non-canonical y >= q")
     x = _xrecover(y)
-    if x & 1 != (int.from_bytes(s, "little") >> 255):
+    # RFC 8032: if x == 0 the sign bit must be 0 (x and -x coincide at 0).
+    if x == 0 and sign == 1:
+        raise ValueError("non-canonical x=0 with sign bit set")
+    if (x & 1) != sign:
         x = _q - x
     P = (x, y)
     if not _isoncurve(P):
-        raise ValueError("decoding point that is not on curve")
+        raise ValueError("point not on curve")
     return P
 
 
 def ed25519_verify(public_key: bytes, message: bytes, signature: bytes) -> bool:
-    """RFC 8032 Ed25519 verify. public_key=32B, signature=64B. Returns bool."""
+    """RFC 8032 Ed25519 verify (canonical-strict, matching Go crypto/ed25519 and
+    libsodium accept/reject behavior). public_key=32B, signature=64B -> bool.
+
+    Strictness that pins it to Go (redteam blocker #1): rejects non-canonical y
+    in point decoding for BOTH R and A, and rejects non-canonical S (>= L,
+    malleability). The cofactorless verification equation [S]B == R + [h]A is used
+    (Go's variant); both R and A are canonically decoded above."""
     if len(signature) != 64 or len(public_key) != 32:
         return False
     try:
         R = _decodepoint(signature[:32])
         A = _decodepoint(public_key)
-    except (ValueError, Exception):  # noqa: BLE001
-        return False
+    except ValueError:
+        return False  # only the expected decode failure is swallowed (blocker minor)
     S = _decodeint(signature[32:])
     if S >= _L:
         return False  # reject non-canonical S (malleability)
@@ -177,3 +205,101 @@ def verify_statement(s: dict[str, Any]) -> bool:
     if len(pub) != 32 or len(sig) != 64:
         return False
     return ed25519_verify(pub, canon_statement(s), sig)
+
+
+# --- quorum / trust-store (mirror of internal/registry/{trustroot,quorum,revocation}.go) ---
+
+import re as _re  # noqa: E402
+
+_RFC3339Z = _re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
+
+
+def _keyid_for_pubkey(pubkey_hex: str) -> str:
+    try:
+        raw = bytes.fromhex(pubkey_hex)
+    except ValueError:
+        return ""
+    return hashlib.sha256(raw).hexdigest()[:16]
+
+
+def _canon_trust_root(tr: dict[str, Any]) -> bytes:
+    keys = sorted(tr.get("keys", []), key=lambda k: k.get("pubkey", ""))
+    parts = [_s("assay-trust-root-v1"), _u64(int(tr.get("v", 1))),
+             _s(tr.get("role", "")), _u64(int(tr.get("threshold", 0))), _u64(len(keys))]
+    for k in keys:
+        parts += [_s(k.get("pubkey", "")), _s(k.get("owner", "")),
+                  _s(k.get("official_access", "")), _s(k.get("added_at", ""))]
+    parts.append(_s(tr.get("expires", "")))
+    return b"".join(parts)
+
+
+def verify_trust_root(tr: dict[str, Any]) -> dict[str, dict] | None:
+    """Return {pubkey: key} of VERIFIED root keys iff the root is self-attested by
+    >= threshold of its own distinct keys and every keyid matches its pubkey.
+    None on failure. (Trusting the root itself is out-of-band — see honest limit.)"""
+    if tr.get("role") != "reference-root" or int(tr.get("threshold", 0)) < 1:
+        return None
+    by_pub = {}
+    for k in tr.get("keys", []):
+        if _keyid_for_pubkey(k.get("pubkey", "")) != k.get("keyid"):
+            return None
+        by_pub[k["pubkey"]] = k
+    preimage = _canon_trust_root(tr)
+    verified = {}
+    for sg in tr.get("sigs", []):
+        for pub, k in by_pub.items():
+            if k["keyid"] == sg.get("keyid"):
+                try:
+                    if ed25519_verify(bytes.fromhex(pub), preimage, bytes.fromhex(sg.get("sig", ""))):
+                        verified[pub] = k
+                except ValueError:
+                    pass
+    return by_pub if len(verified) >= int(tr["threshold"]) else None
+
+
+def evaluate_quorum(statements: list[dict], trust_root: dict[str, Any],
+                    revocations: dict[str, Any] | None, now_z: str) -> dict[str, dict]:
+    """Mirror of registry.EvaluateQuorum. Returns {fingerprint_id: {status, model,
+    vetted, community, expired, threshold}}. status in PASS|STALE|NO_QUORUM.
+    Distinctness on FULL pubkey; community keys never count toward quorum."""
+    by_pub = verify_trust_root(trust_root)
+    if by_pub is None:
+        return {}
+    threshold = int(trust_root["threshold"])
+    revoked_keyids, revoked_fps = set(), set()
+    if revocations:
+        revoked_keyids = set(revocations.get("revoked_keyids", []))
+        revoked_fps = set(revocations.get("revoked_fingerprint_ids", []))
+    trusted_pub = {pub for pub, k in by_pub.items() if k["keyid"] not in revoked_keyids}
+
+    groups: dict[str, dict] = {}
+    for st in statements:
+        fp = st.get("fingerprint", {})
+        fp_id = fingerprint_id(fp)
+        if fp_id in revoked_fps or not verify_statement(st):
+            continue
+        g = groups.setdefault(fp_id, {"model": fp.get("model"), "provider": fp.get("provider"),
+                                      "vetted": set(), "expired": set(), "community": set(),
+                                      "threshold": threshold, "fingerprint": fp})
+        fresh = True
+        exp = st.get("expires_at", "")
+        if exp:
+            if not _RFC3339Z.match(exp):
+                continue
+            fresh = exp > now_z  # canonical grammar makes lexical compare == time compare
+        pub = st.get("signer_key", "")
+        if pub in trusted_pub:
+            (g["vetted"] if fresh else g["expired"]).add(pub)
+        else:
+            g["community"].add(pub)
+
+    for g in groups.values():
+        if len(g["vetted"]) >= threshold:
+            g["status"] = "PASS"
+        elif len(g["vetted"]) + len(g["expired"]) >= threshold:
+            g["status"] = "STALE"
+        else:
+            g["status"] = "NO_QUORUM"
+        for f in ("vetted", "expired", "community"):
+            g[f] = sorted(g[f])
+    return groups

@@ -37,6 +37,27 @@ func Sign(s *Statement, seedHex string) (sigHex string, err error) {
 	return hex.EncodeToString(sig), nil
 }
 
+// keyFromSeed derives the hex public key (and re-emits the seed) from a hex
+// Ed25519 seed, without signing — used to build deterministic test fixtures.
+func keyFromSeed(seedHex string) (pubHex, seedOut string, err error) {
+	seed, err := hex.DecodeString(seedHex)
+	if err != nil || len(seed) != ed25519.SeedSize {
+		return "", "", fmt.Errorf("invalid ed25519 seed")
+	}
+	priv := ed25519.NewKeyFromSeed(seed)
+	return hex.EncodeToString(priv.Public().(ed25519.PublicKey)), seedHex, nil
+}
+
+// signRaw signs arbitrary preimage bytes with a hex seed (used for trust-root
+// and revocation signatures, which are not Statements). Returns hex signature.
+func signRaw(seedHex string, preimage []byte) (string, error) {
+	seed, err := hex.DecodeString(seedHex)
+	if err != nil || len(seed) != ed25519.SeedSize {
+		return "", fmt.Errorf("invalid ed25519 seed")
+	}
+	return hex.EncodeToString(ed25519.Sign(ed25519.NewKeyFromSeed(seed), preimage)), nil
+}
+
 // Verify checks s.Sig against Canon(s) using s.SignerKey. It returns an error
 // describing the exact failure (bad hex, wrong key size, signature mismatch) so
 // callers can log precisely. A nil return means the signature is valid for the
@@ -62,4 +83,18 @@ func short(h string) string {
 		return h[:12]
 	}
 	return h
+}
+
+// ed25519VerifyHex verifies a hex signature over msg with a hex pubkey. Returns
+// false on any decode/size/verify failure (never panics).
+func ed25519VerifyHex(pubHex string, msg []byte, sigHex string) bool {
+	pub, err := hex.DecodeString(pubHex)
+	if err != nil || len(pub) != ed25519.PublicKeySize {
+		return false
+	}
+	sig, err := hex.DecodeString(sigHex)
+	if err != nil || len(sig) != ed25519.SignatureSize {
+		return false
+	}
+	return ed25519.Verify(ed25519.PublicKey(pub), msg, sig)
 }

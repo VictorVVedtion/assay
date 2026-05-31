@@ -1,0 +1,142 @@
+{
+  "expected": {
+    "165e78cbf8bf35f276929d0da3c5c20a64e54c15c9df1b0c02e964a3d1f5eb1b": {
+      "community": 1,
+      "model": "gpt-4o-mini",
+      "status": "PASS",
+      "vetted": 2
+    },
+    "597420f34e7257e305abc2e7f5a68af088260883ad8eb66ddcc08c2138584be7": {
+      "community": 0,
+      "model": "gpt-4o",
+      "status": "NO_QUORUM",
+      "vetted": 1
+    }
+  },
+  "now_z": "2026-06-01T00:00:00Z",
+  "statements": [
+    {
+      "v": 1,
+      "fingerprint": {
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "model_snapshot": "",
+        "precision": "reference",
+        "prompt_pool_hash": "pool-v1",
+        "sampling_params_hash": "std-v1",
+        "samples_digest": "dig-fp1",
+        "n_samples": 250,
+        "collected_at": "2026-05-31T00:00:00Z",
+        "collection_method": "official-api-direct"
+      },
+      "signer_id": "alice",
+      "signer_key": "d04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c9778737",
+      "signed_at": "2026-05-31T00:00:00Z",
+      "expires_at": "2030-01-01T00:00:00Z",
+      "sig": "7b0d067697542ed34eeb7f714ff59230c4114942c16a377aee969b72399ac672d95ad965943bd452f1de0e7d099b9a5c369b92ba4a52b080e8b2d4b7a53f9505"
+    },
+    {
+      "v": 1,
+      "fingerprint": {
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "model_snapshot": "",
+        "precision": "reference",
+        "prompt_pool_hash": "pool-v1",
+        "sampling_params_hash": "std-v1",
+        "samples_digest": "dig-fp1",
+        "n_samples": 250,
+        "collected_at": "2026-05-31T00:00:00Z",
+        "collection_method": "official-api-direct"
+      },
+      "signer_id": "bob",
+      "signer_key": "a09aa5f47a6759802ff955f8dc2d2a14a5c99d23be97f864127ff9383455a4f0",
+      "signed_at": "2026-05-31T00:00:00Z",
+      "expires_at": "2030-01-01T00:00:00Z",
+      "sig": "a7d642f1b3375748124ffa6dd81fced7fce5cc3206cc5ec965045c3ccba5bb93d22b2258ad97917c51069f0bac22c84d13a4ac602cb2764bf5abea3fa4c6410f"
+    },
+    {
+      "v": 1,
+      "fingerprint": {
+        "provider": "openai",
+        "model": "gpt-4o",
+        "model_snapshot": "",
+        "precision": "reference",
+        "prompt_pool_hash": "pool-v1",
+        "sampling_params_hash": "std-v1",
+        "samples_digest": "dig-fp2",
+        "n_samples": 250,
+        "collected_at": "2026-05-31T00:00:00Z",
+        "collection_method": "official-api-direct"
+      },
+      "signer_id": "alice",
+      "signer_key": "d04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c9778737",
+      "signed_at": "2026-05-31T00:00:00Z",
+      "expires_at": "2030-01-01T00:00:00Z",
+      "sig": "00202a48bd1298dadea66792dd8bda0b4197fd968ff2f6cc24e8d5222e7bdd650a54f5664739276fb52f8167445719483fe566effd8e67a9759161aa09d9c304"
+    },
+    {
+      "v": 1,
+      "fingerprint": {
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "model_snapshot": "",
+        "precision": "reference",
+        "prompt_pool_hash": "pool-v1",
+        "sampling_params_hash": "std-v1",
+        "samples_digest": "dig-fp1",
+        "n_samples": 250,
+        "collected_at": "2026-05-31T00:00:00Z",
+        "collection_method": "official-api-direct"
+      },
+      "signer_id": "stranger",
+      "signer_key": "d759793bbc13a2819a827c76adb6fba8a49aee007f49f2d0992d99b825ad2c48",
+      "signed_at": "2026-05-31T00:00:00Z",
+      "expires_at": "2030-01-01T00:00:00Z",
+      "sig": "2598261f9394af732b4576bfe8eef8aa5d2ea89d9f3f33783b2780f56c4517726f7956ab989d00248515eda9ad65c09a379e88eaabecf4f884f28435031a530b"
+    }
+  ],
+  "trust_root": {
+    "v": 1,
+    "role": "reference-root",
+    "threshold": 2,
+    "keys": [
+      {
+        "keyid": "10ba682c8ad13513",
+        "pubkey": "d04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c9778737",
+        "owner": "alice",
+        "official_access": "test-direct",
+        "added_at": "2026-01-01T00:00:00Z"
+      },
+      {
+        "keyid": "1325b850c2871916",
+        "pubkey": "a09aa5f47a6759802ff955f8dc2d2a14a5c99d23be97f864127ff9383455a4f0",
+        "owner": "bob",
+        "official_access": "test-direct",
+        "added_at": "2026-01-01T00:00:00Z"
+      },
+      {
+        "keyid": "6c8f8607dbe87077",
+        "pubkey": "17cb79fb2b4120f2b1ec65e4198d6e08b28e813feb01e4a400839b85e18080ce",
+        "owner": "carol",
+        "official_access": "test-direct",
+        "added_at": "2026-01-01T00:00:00Z"
+      }
+    ],
+    "expires": "2030-01-01T00:00:00Z",
+    "sigs": [
+      {
+        "keyid": "10ba682c8ad13513",
+        "sig": "fb2b19b0e695cea1be11c1d8e197705a62e4b4fcc4d339daa0739f6369e9d9ce2b7fb5c93f7a566d6acad22f28ab4e49d7c0daf8f2cc324e966003ad1d1e440f"
+      },
+      {
+        "keyid": "1325b850c2871916",
+        "sig": "f9251474233a47ad6d4130c6e61b978bb4af20dff456e61611c81e2d242aadc72b1a143204e6000036f9faac4acb0bb6b5e632b145b85130ce5e97cb17f5a703"
+      },
+      {
+        "keyid": "6c8f8607dbe87077",
+        "sig": "0c6ffc7f6b2164ed8ba9c2ee70ed3e0307d29daccbdc658d96821428f0fc389793a694c3063918e1ef452e30df1284b0ea1b18ca474aef96dc4cf056a900da0f"
+      }
+    ]
+  }
+}
