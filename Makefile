@@ -19,6 +19,7 @@ test-py:
 	PYTHONPATH=analyzer $(PY) analyzer/tests/test_checks.py
 	PYTHONPATH=analyzer $(PY) analyzer/tests/test_provenance.py
 	PYTHONPATH=analyzer $(PY) analyzer/tests/test_exposure.py
+	PYTHONPATH=analyzer $(PY) analyzer/tests/test_model_identity.py
 
 # Regenerate the shared Go<->Python digest golden vectors (run after a schema
 # change; commit the result). Python then verifies against them in test-py.

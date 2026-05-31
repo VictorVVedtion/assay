@@ -76,9 +76,10 @@ def build_report(
         if v["status"] == "flag":
             flags.append(v)
 
-    order = ["token_recount", "provenance", "exposure", "cache_replay", "throughput"]
+    order = ["token_recount", "model_identity", "provenance", "exposure", "cache_replay", "throughput"]
     labels = {
         "token_recount": "Token usage (tiktoken recount)",
+        "model_identity": "Model identity (MMD probe test)",
         "provenance": "Upstream provenance (headers)",
         "exposure": "Data exposure (egress lower bound)",
         "cache_replay": "Cache-replay tripwire",

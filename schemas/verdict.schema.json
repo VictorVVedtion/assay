@@ -11,7 +11,7 @@
     "record_id": { "type": "string" },
     "record_seq": { "type": "integer", "minimum": 0 },
     "record_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "binds verdict to exact evidence -> reproducible" },
-    "check": { "enum": ["token_recount", "provenance", "exposure", "cache_replay", "throughput"] },
+    "check": { "enum": ["token_recount", "provenance", "exposure", "cache_replay", "throughput", "model_identity"] },
     "analyzer_version": { "type": "string" },
     "ts": { "type": "string", "format": "date-time" },
     "status": { "enum": ["ok", "flag", "skip", "error"] },

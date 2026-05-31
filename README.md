@@ -44,6 +44,7 @@ Cloudflare AI Gateway 之类解决不了:要你交账号、闭源、不在数据
 | check | 作用 | 适用 |
 |---|---|---|
 | `token_recount` | tiktoken 本地重算用量,抓虚报 | OpenAI 系(强);其他 skip |
+| `model_identity` | MMD 分布检验:探针采样比对正品参考,抓静默降级/偷换模型 | 需 `assay calibrate` 建参考;无则 skip |
 | `provenance` | 被动核验响应头/标记,判断是否真代理到声称的上游(抓套壳苗头) | Claude/OpenAI/Gemini |
 | `exposure` | 度量你**实际送出去**的敏感内容下界(密钥/PII/代码),请求+响应双向扫 | 全部 |
 | `cache_replay` | 抓"同一响应喂多个不同请求"的缓存重放计费 | 全部 |
@@ -51,7 +52,7 @@ Cloudflare AI Gateway 之类解决不了:要你交账号、闭源、不在数据
 
 加上哈希链证据 + `assay verify` / `assay-analyzer replay` 的可复现核验,以及**对自身证据日志的凭据脱敏**(body 里的 key 在落盘前替换成 `[assay-redacted:类型]`,真 key 仍照常发给上游)。
 
-> 模型身份的深度检测(LLMmap 主动指纹、MMD 分布检验、社区指纹库)在 Phase 1+。路线见 [DESIGN.md §7](DESIGN.md)。
+> **Phase 1 模型身份检测已落地核心检测器**(`model_identity`,MMD 分布检验)。它在真实 OpenAI 输出上验证过:同模型不误报(p=0.70),gpt-3.5 冒充 gpt-4o-mini 被抓(p=0.005)。当前需用 `assay calibrate`(官方直连)建正品参考,否则 skip——**绝不无参考瞎判**。诚实边界:报"与参考分布不一致",非"诈骗"(良性量化/微调不可区分);主动探针法,对会识别探针的老练中转站无效。探针面 Go 注入器 + 社区签名指纹库为后续。路线见 [DESIGN.md §7](DESIGN.md)。
 
 ## 关于"中转站会不会卖我数据"(读这段,别被任何人骗)
 

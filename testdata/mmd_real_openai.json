@@ -1,0 +1,225 @@
+{
+ "meta": {
+  "prompts": [
+   "Continue this text: The history of the Roman Empire",
+   "Continue this text: Photosynthesis is the process by which",
+   "Continue this text: In the field of quantum mechanics,",
+   "Continue this text: The Great Barrier Reef is",
+   "Continue this text: Jazz emerged in the early twentieth century",
+   "Continue this text: The theory of plate tectonics explains",
+   "Continue this text: During the Renaissance, artists",
+   "Continue this text: The human immune system defends"
+  ],
+  "n_per_prompt": 6,
+  "max_tokens": 40,
+  "temperature": 1.0,
+  "note": "Real OpenAI completions for MMD ground-truth test. ref_A and test_same are gpt-4o-mini (must test SAME); test_swap is gpt-3.5-turbo (must test DIFFERENT)."
+ },
+ "ref_A": {
+  "model": "gpt-4o-mini",
+  "samples": {
+   "0": [
+    "The history of the Roman Empire is a vast and complex narrative that spans over a millennium, beginning with the establishment of the Roman Republic in 509 BC and culminating in the fall of the Western Roman Empire",
+    "The history of the Roman Empire is a vast and complex narrative that spans over a millennium, from its legendary founding in 753 BC to its eventual fall in the West in AD 476. This narrative",
+    "The history of the Roman Empire is a vast and complex narrative that spans over a millennium, characterized by remarkable achievements, profound struggles, and transformative events. It began with the founding of the city of Rome",
+    "The history of the Roman Empire is a rich tapestry woven from centuries of conquest, governance, culture, and transformation. It began with the establishment of Rome in 753 BCE, traditionally attributed to its legendary",
+    "The history of the Roman Empire is a profound narrative that spans over a millennium, beginning with the founding of Rome in 753 BC and culminating with the fall of Constantinople in AD 1453.",
+    "The history of the Roman Empire is a vast and complex narrative that spans over a millennium, encompassing significant political, social, and cultural transformations. Established as a republic in 509 BCE, Rome initially expanded"
+   ],
+   "1": [
+    "Photosynthesis is the process by which green plants, algae, and some bacteria convert light energy into chemical energy. During this process, these organisms use sunlight, carbon dioxide from the air, and water from",
+    "Photosynthesis is the process by which green plants, algae, and some bacteria convert light energy, usually from the sun, into chemical energy in the form of glucose. This process takes place primarily in the",
+    "Photosynthesis is the process by which green plants, algae, and some bacteria convert light energy, usually from the sun, into chemical energy stored in glucose. During this process, these organisms use sunlight to",
+    "Photosynthesis is the process by which green plants, algae, and some bacteria convert light energy into chemical energy stored in glucose, a type of sugar. This process primarily occurs in the chloroplasts of",
+    "Photosynthesis is the process by which green plants, algae, and some bacteria convert light energy into chemical energy in the form of glucose. This process occurs primarily in the chloroplasts of plant cells,",
+    "Photosynthesis is the process by which green plants, algae, and some bacteria convert light energy, usually from the sun, into chemical energy in the form of glucose. This process takes place primarily in the"
+   ],
+   "2": [
+    "In the field of quantum mechanics, scientists explore the behavior of matter and energy at the most fundamental level. This fascinating branch of physics reveals that particles, such as electrons and photons, do not adhere to",
+    "In the field of quantum mechanics, the behavior of matter and energy at the smallest scales is governed by principles that often defy classical intuition. Quantum mechanics describes phenomena such as superposition, where particles can",
+    "In the field of quantum mechanics, the behavior of particles at the smallest scales reveals phenomena that challenge our classical intuitions. Unlike macroscopic objects, particles like electrons and photons exhibit wave-particle duality",
+    "In the field of quantum mechanics, researchers continuously explore the behavior of matter and energy at the smallest scales. The principles of quantum mechanics challenge our classical intuitions, revealing a world where particles can exist in",
+    "In the field of quantum mechanics, researchers explore the fundamental principles that govern the behavior of matter and energy at the smallest scales. This branch of physics challenges our classical intuitions, introducing concepts such as wave",
+    "In the field of quantum mechanics, we explore the fundamental behaviors and interactions of particles at a scale where classical physics fails to provide accurate descriptions. The principles of quantum mechanics challenge our intuitions about reality,"
+   ],
+   "3": [
+    "the world's largest coral reef system, stretching over 2,300 kilometers along the northeastern coast of Australia. It is made up of nearly 3,000 individual reefs and 900 islands, hosting a",
+    "The Great Barrier Reef is one of the most remarkable natural wonders of the world, stretching over 2,300 kilometers along the coast of Queensland, Australia. Comprising over 2,900 individual reefs",
+    "The Great Barrier Reef is a vast coral reef system located off the northeastern coast of Australia. It is the largest coral reef ecosystem in the world, spanning over 2,300 kilometers (1,400",
+    "The Great Barrier Reef is the world's largest coral reef system, stretching over 2,300 kilometers along the northeast coast of Australia. Comprising thousands of individual reefs and islands, it is a UNESCO World",
+    "The Great Barrier Reef is the world's largest coral reef system, located off the coast of Queensland, Australia. Stretching over 2,300 kilometers, it is composed of nearly 3,000 individual",
+    "The Great Barrier Reef is a stunning natural wonder located off the northeastern coast of Australia. It is the largest coral reef system in the world, stretching over 2,300 kilometers and encompassing approximately 2"
+   ],
+   "4": [
+    "as a dynamic and innovative musical genre that blended elements from African American musical traditions, blues, ragtime, and European classical music. Originating in New Orleans, jazz was characterized by its distinctive rhythms,",
+    "Jazz emerged in the early twentieth century as a vibrant and innovative musical genre that blended elements of African American folk music, blues, ragtime, and European musical traditions. Originating in New Orleans, a",
+    "as a distinctive musical genre characterized by its unique blend of African-American musical traditions, blues, ragtime, and European harmonic structures. Originating in New Orleans, jazz quickly spread to other major cities like",
+    "as a vibrant and innovative musical genre that blended African American musical traditions with elements of European music. Originating in New Orleans, jazz was characterized by its unique rhythm, improvisation, and expressive melodies.",
+    "as a unique genre of music that blended various musical traditions, including African American folk music, blues, ragtime, and European harmonic structures. Rooted primarily in New Orleans, jazz quickly spread throughout the",
+    "Jazz emerged in the early twentieth century as a vibrant and innovative musical genre that blended elements of African American folk traditions, blues, ragtime, and European classical music. Originating in New Orleans, jazz"
+   ],
+   "5": [
+    "The theory of plate tectonics explains the large-scale movements of Earth's lithosphere, which is divided into several rigid plates that float on the semi-fluid asthenosphere beneath them. This theory provides a comprehensive",
+    "The theory of plate tectonics explains the large-scale movements of Earth's lithosphere, which is divided into several rigid plates that float on the semi-fluid asthenosphere beneath. This scientific framework integrates various geological",
+    "The theory of plate tectonics explains the large-scale movements of the Earth's lithosphere, which is divided into several rigid plates that float on the semi-fluid asthenosphere beneath. This theory provides a comprehensive",
+    "The theory of plate tectonics explains the dynamics of Earth's lithosphere, which is divided into numerous large plates that float on the semi-fluid asthenosphere beneath them. This theory accounts for the movements of",
+    "The theory of plate tectonics explains the large-scale movements of Earth's lithosphere, which is divided into several tectonic plates that float on the semi-fluid asthenosphere beneath them. These plates interact at",
+    "The theory of plate tectonics explains the large-scale motions of Earth's lithosphere, which is divided into several tectonic plates. These plates float on the semi-fluid asthenosphere beneath them and interact at"
+   ],
+   "6": [
+    "During the Renaissance, artists experienced a remarkable period of creativity and innovation that fundamentally transformed the art world. They sought to explore and depict the human experience with unprecedented realism and emotional depth. This era, spanning",
+    "During the Renaissance, artists experienced a profound transformation in their approach to creativity and expression, moving away from the rigid constraints of medieval art towards more innovative and human-centered techniques. This period, spanning roughly from",
+    "During the Renaissance, artists emerged as pivotal figures in society, revolutionizing the way we perceive art and humanity itself. This period, spanning roughly from the 14th to the 17th century,",
+    "During the Renaissance, artists began to explore new techniques and ideas that transformed the landscape of art and culture in Europe. This period, which spanned roughly from the 14th to the 17th",
+    "During the Renaissance, artists experienced a profound transformation in their approach to creativity and representation. This period, spanning roughly from the 14th to the 17th century, marked a revival of classical learning",
+    "During the Renaissance, artists began to break away from the rigid constraints of medieval art, embracing a more naturalistic approach that highlighted human emotion and the beauty of the natural world. This period, spanning roughly"
+   ],
+   "7": [
+    "The human immune system defends the body against harmful pathogens, such as bacteria, viruses, fungi, and parasites, as well as other foreign substances. It consists of a complex network of cells, tissues",
+    "The human immune system defends the body against harmful pathogens, including bacteria, viruses, fungi, and parasites. This complex network of cells, tissues, and organs works collaboratively to recognize and neutralize these",
+    "The human immune system defends the body against harmful pathogens, such as bacteria, viruses, fungi, and parasites. It comprises a complex network of cells, tissues, and organs that work in concert to",
+    "The human immune system defends the body against harmful pathogens, including bacteria, viruses, fungi, and parasites. It employs a complex network of cells, tissues, and organs that work in concert to identify",
+    "The human immune system defends the body against harmful invaders, such as bacteria, viruses, parasites, and fungi. It is a complex network of cells, tissues, and organs that work together to",
+    "The human immune system defends the body against harmful pathogens, including bacteria, viruses, fungi, and parasites. It operates through a complex network of cells, tissues, and organs that work collaboratively to identify"
+   ]
+  }
+ },
+ "test_same": {
+  "model": "gpt-4o-mini",
+  "samples": {
+   "0": [
+    "The history of the Roman Empire is a complex tapestry that spans over a millennium, marked by remarkable achievements, cultural developments, and significant challenges. It begins with the legendary founding of Rome in 753 BCE",
+    "The history of the Roman Empire is a vast and intricate tapestry that spans over a millennium, beginning with the establishment of Rome in 753 BC and culminating in the fall of Constantinople in AD 145",
+    "is a complex narrative that spans over a millennium, characterized by remarkable achievements, significant conflicts, and a profound influence on the world. Beginning with the legendary foundation of Rome in 753 BCE, the empire",
+    "The history of the Roman Empire is a vast and intricate tapestry that spans over a millennium, from its legendary founding in 753 BCE to its eventual decline and fall in the 5th century CE.",
+    "The history of the Roman Empire is a vast and complex narrative that spans over a millennium, from its legendary founding in 753 BCE to its eventual decline and fall in the West in 476 CE.",
+    "The history of the Roman Empire is a vast and intricate narrative that spans over a millennium, from its legendary founding in 753 BC to its eventual decline and fall in the West in AD 476."
+   ],
+   "1": [
+    "Photosynthesis is the process by which green plants, algae, and some bacteria convert light energy into chemical energy, using carbon dioxide and water to produce glucose and oxygen. This process primarily occurs in the chlor",
+    "Photosynthesis is the process by which green plants, algae, and some bacteria convert light energy, usually from the sun, into chemical energy stored in glucose. This remarkable process primarily occurs in the chloroplast",
+    "Photosynthesis is the process by which green plants, algae, and certain bacteria convert light energy into chemical energy stored in glucose. This biological process occurs primarily in the chloroplasts of plant cells, where",
+    "Photosynthesis is the process by which green plants, algae, and some bacteria convert light energy into chemical energy stored in glucose. This process primarily occurs in the chloroplasts of plant cells, where chlor",
+    "Photosynthesis is the process by which green plants, algae, and some bacteria convert light energy, usually from the sun, into chemical energy stored in glucose. This fundamental biological process occurs primarily in the chlor",
+    "Photosynthesis is the process by which green plants, algae, and certain bacteria convert light energy, usually from the sun, into chemical energy stored in glucose. This process primarily takes place in the chloroplast"
+   ],
+   "2": [
+    "In the field of quantum mechanics, researchers explore the fundamental principles that govern the behavior of matter and energy at the smallest scales. Quantum mechanics introduces concepts that challenge our classical intuition, such as wave-particle",
+    "In the field of quantum mechanics, researchers explore the fundamental behaviors of matter and energy at the smallest scales. This domain of physics challenges our classical intuitions, revealing a world where particles can exist in super",
+    "In the field of quantum mechanics, researchers explore the fundamental principles that govern the behavior of matter and energy at the smallest scales. Quantum mechanics fundamentally challenges our classical intuition about the nature of reality. It introduces",
+    "In the field of quantum mechanics, researchers explore the fundamental principles that govern the behavior of matter and energy at the smallest scales. Quantum mechanics challenges classical intuitions about the nature of reality, introducing concepts such",
+    "In the field of quantum mechanics, researchers explore the fundamental principles that govern the behavior of matter and energy at the smallest scales. Quantum mechanics departs significantly from classical physics, introducing concepts such as wave-p",
+    "In the field of quantum mechanics, researchers delve into the fundamental principles that govern the behavior of matter and energy at the smallest scales. Quantum mechanics challenges our classical intuitions, presenting a world where particles can"
+   ],
+   "3": [
+    "The Great Barrier Reef is one of the most remarkable natural wonders of the world, stretching over 2,300 kilometers along the coast of Queensland, Australia. It is the largest coral reef system, composed",
+    "The Great Barrier Reef is one of the most spectacular natural wonders of the world, stretching over 2,300 kilometers along the northeastern coast of Australia. As the largest coral reef system on the planet,",
+    "The Great Barrier Reef is one of the most spectacular natural wonders of the world, stretching over 2,300 kilometers along the northeastern coast of Australia. It is the largest coral reef system on the planet",
+    "The Great Barrier Reef is one of the most remarkable natural wonders of the world, stretching over 2,300 kilometers along the northeastern coast of Australia. Recognized as a UNESCO World Heritage Site, it",
+    "The Great Barrier Reef is the world's largest coral reef system, located off the northeastern coast of Australia. Stretching over 2,300 kilometers (approximately 1,400 miles), it is composed of",
+    "The Great Barrier Reef is one of the most spectacular and complex ecosystems on the planet. Located off the northeastern coast of Australia, it stretches over 2,300 kilometers and is composed of approximately 2"
+   ],
+   "4": [
+    "Jazz emerged in the early twentieth century as a vibrant and innovative musical genre that synthesized various cultural influences, particularly African American musical traditions, blues, ragtime, and European harmonies. Its roots can be",
+    "Jazz emerged in the early twentieth century as a vibrant and revolutionary musical genre that blended elements of African American folk traditions, blues, ragtime, and European musical influences. Originating in New Orleans, jazz",
+    "as a vibrant and innovative musical genre rooted in African American history and culture. It developed primarily in the southern United States, particularly in cities like New Orleans, where a rich tapestry of musical influences converged",
+    "as a revolutionary musical genre in the United States, primarily originating from African American communities in New Orleans. Combining elements of blues, ragtime, and brass band music, jazz developed into a distinctive style characterized",
+    "as a vibrant and innovative musical genre that blended elements of African American musical traditions with European influences. Originating in New Orleans, jazz quickly evolved as musicians sought to express their individuality and creativity through improvisation",
+    "Jazz emerged in the early twentieth century as a distinctive musical genre rooted in African American cultural experiences. It originated in New Orleans, a city known for its vibrant and diverse musical landscape, which included blues,"
+   ],
+   "5": [
+    "The theory of plate tectonics explains the large-scale movements of the Earth's lithosphere, which is divided into several tectonic plates that float on the semi-fluid asthenosphere beneath them. These plates are",
+    "The theory of plate tectonics explains the large-scale movements of Earth's lithosphere, which is divided into several tectonic plates that float on the semi-fluid asthenosphere beneath them. These plates interact at",
+    "The theory of plate tectonics explains the movement and interaction of the Earth's lithosphere, which is divided into several large and small tectonic plates that float on the semi-fluid asthenosphere beneath them.",
+    "The theory of plate tectonics explains the movement and interaction of the Earth's lithosphere, which is divided into several large and small tectonic plates that float on the semi-fluid asthenosphere beneath. This",
+    "The theory of plate tectonics explains the movement of the Earth's lithosphere, which is divided into several large and small tectonic plates. These plates float on the semi-fluid asthenosphere beneath them and",
+    "The theory of plate tectonics explains the movement and interaction of the Earth's lithosphere, which is divided into several large and small tectonic plates. These plates float on the semi-fluid asthenosphere beneath"
+   ],
+   "6": [
+    "During the Renaissance, artists embraced a renewed interest in the classical ideals of ancient Rome and Greece, leading to a profound transformation in the world of art and culture. This period, spanning roughly from the ",
+    "During the Renaissance, artists blossomed in an environment that emphasized humanism, innovation, and the rediscovery of classical antiquity. This period, which spanned roughly from the 14th to the",
+    "During the Renaissance, artists experienced a remarkable revival of creativity and innovation, breaking away from the constraints of the Middle Ages and embracing a renewed interest in the classical ideals of Ancient Greece and Rome. This period",
+    "During the Renaissance, artists experienced a remarkable transformation in their approach to creativity, technique, and subject matter. This period, spanning roughly from the 14th to the 17th century, marked a",
+    "During the Renaissance, artists experienced a profound transformation in their creative practices and societal roles. This period, spanning roughly from the 14th to the 17th century, was marked by a renewed interest",
+    "During the Renaissance, artists were not only concerned with the aesthetics of their work but also with the ideals of humanism, which emphasized the potential and achievements of individuals. This cultural movement, which began in"
+   ],
+   "7": [
+    "The human immune system defends the body against a myriad of pathogens, including bacteria, viruses, fungi, and parasites. It consists of a complex network of cells, tissues, and organs that work together",
+    "The human immune system defends the body against pathogenic organisms, such as bacteria, viruses, fungi, and parasites. It is a complex network of cells, tissues, and organs that work together to identify",
+    "The human immune system defends the body against harmful pathogens, including bacteria, viruses, fungi, and parasites. It consists of a complex network of cells, tissues, and organs that work in concert to",
+    "The human immune system defends the body against harmful pathogens, such as bacteria, viruses, fungi, and parasites. It comprises a complex network of cells, tissues, and organs that work together to identify",
+    "The human immune system defends the body against a wide array of pathogens, including bacteria, viruses, fungi, and parasites. It is a complex network of cells, tissues, and organs that work together",
+    "The human immune system defends the body against pathogens, such as bacteria, viruses, fungi, and parasites. It consists of a complex network of cells, tissues, and organs that work together to identify"
+   ]
+  }
+ },
+ "test_swap": {
+  "model": "gpt-3.5-turbo",
+  "samples": {
+   "0": [
+    "is a long and complex one, stretching over a period of more than 1,000 years. The empire was founded in 27 BC when the Roman Republic transitioned into an imperial form of government",
+    " is filled with triumphs and tragedies, conquests and defeats. From its founding in 27 BC by Augustus Caesar to its eventual fall in 476 AD, the Roman Empire was a dominant force",
+    " is a fascinating tale of power, conquest, and civilization. Beginning as a small city-state in what is now modern-day Italy, Rome eventually grew into one of the largest empires in history. With",
+    " is a sprawling saga of conquest, glory, and eventual decline. Founded in 27 BC, the Roman Empire quickly expanded to become the dominant power in the Mediterranean region and beyond. With its vast network",
+    "is a story of conquest, expansion, and eventual decline. The empire began in 27 BC, when Augustus Caesar became the first emperor of Rome. Under his rule, the Roman Empire grew to",
+    " is a rich and complex tapestry that spans over a millennium. Founded in 753 BC, Rome began as a small city-state in central Italy before growing into one of the most powerful empires in"
+   ],
+   "1": [
+    " plants, algae, and some bacteria convert sunlight into energy. This energy is used to fuel their growth and produce oxygen as a byproduct. Photosynthesis involves capturing light energy with chlorophyll molecules in",
+    " plants, algae, and some bacteria convert light energy into chemical energy stored in glucose and other organic molecules. It is a crucial biological process that sustains life on Earth, as it provides the energy source",
+    " plants, algae, and some bacteria convert light energy into chemical energy stored in glucose molecules. This process is essential for the survival of plants as they use the glucose produced during photosynthesis for growth, repair",
+    "plants, algae, and some bacteria convert sunlight into energy in the form of glucose. This process is essential for producing oxygen, which is necessary for the survival of all living organisms on Earth. During photos",
+    " plants, algae, and some bacteria convert sunlight into energy. This energy is used to convert carbon dioxide and water into glucose, a type of sugar that serves as food for the organism. During this process",
+    " plants, algae, and some bacteria convert sunlight into energy for growth and survival. During this process, these organisms take in carbon dioxide from the air and water from the soil, using them in conjunction with"
+   ],
+   "2": [
+    " researchers have made groundbreaking discoveries regarding the behavior of subatomic particles and the nature of reality at the smallest scales. Quantum mechanics has revolutionized our understanding of how the universe works, challenging our traditional notions of",
+    " there is a concept known as superposition, where a particle can exist in multiple states at the same time. This idea challenges our classical understanding of the world, where objects are typically in only one state",
+    " particles do not behave in the same way as they do in classical physics. Instead, they can exist in multiple states at once and can interact with each other in ways that defy our traditional understanding of cause",
+    " one of the most intriguing and puzzling phenomena is known as superposition. Superposition occurs when a particle exists in multiple states simultaneously. This concept is difficult to grasp, as it challenges our classical understanding",
+    " many phenomena defy classical understanding and challenge our traditional notions of reality. The study of particles at the subatomic level has shown that they can exist in multiple states simultaneously, a concept known as superposition.",
+    " there are numerous fundamental principles that govern the behavior of particles at the smallest scales. One of the most well-known principles is the concept of superposition, which states that particles can exist in multiple states simultaneously"
+   ],
+   "3": [
+    " a natural wonder located off the coast of Australia. It is the largest coral reef system in the world, stretching over 1,400 miles and covering an area of approximately 133,000 square miles",
+    " one of the most incredible natural wonders of the world. Stretching over 1,400 miles off the northeast coast of Australia, it is the largest coral reef system in the world. Home to thousands",
+    " one of the most diverse and important marine ecosystems in the world. Stretching over 2,300 kilometers off the coast of Australia, it is home to thousands of species of fish, coral, and",
+    " one of the most spectacular natural wonders on Earth. Stretching over 1,400 miles along the coast of Queensland, Australia, this vibrant underwater ecosystem is home to an incredible diversity of marine life,",
+    " the world's largest coral reef system, stretching over 1,400 miles along the coast of Queensland, Australia. It is home to thousands of species of marine life and is one of the most biod",
+    " the largest coral reef system in the world, stretching over 1,400 miles along the coast of Australia. It is home to over 1,500 species of fish, 400 types of coral"
+   ],
+   "4": [
+    " as a distinct style of music that combined elements of African American and European musical traditions. It was born out of the cultural melting pot of New Orleans, where African rhythms, blues scales, and European instruments",
+    " in the southern United States, particularly in New Orleans. It was influenced by a variety of musical styles, including blues, ragtime, and traditional African rhythms. Jazz quickly spread to other cities, such",
+    " as a fusion of African American musical traditions, including blues, ragtime, and spirituals, with influences from European and Caribbean music. It quickly became popular in cities like New Orleans, Chicago, and",
+    " as a unique and powerful form of music that combined elements of African rhythms, European harmonies, and American improvisation. It grew out of the African American community in New Orleans, where musicians would gather",
+    " as a musical genre that was heavily influenced by African American culture and musical traditions. Born out of the blending of traditional African rhythms and melodies with European instruments and harmonies, jazz quickly became a popular form",
+    " and quickly became one of the most influential forms of music in American culture. It originated in African-American communities in the southern United States, drawing upon a combination of African rhythms, blues, and gospel music"
+   ],
+   "5": [
+    " how the Earth's lithosphere is divided into several large plates that slowly drift and interact with one another. These plates are all in constant motion, which can result in geological events such as earthquakes, volcanic",
+    " how the Earth's surface is divided into several large plates that float on the semi-fluid mantle below. These plates are constantly moving, either away from each other, toward each other, or sliding past each",
+    " how the Earth's lithosphere is divided into several large plates that are constantly moving and interacting with each other. These plates float on the semi-fluid asthenosphere beneath them, driven by the heat con",
+    "the movement and interactions of Earth's lithosphere, which is divided into several large plates that float on the semi-fluid asthenosphere beneath them. These plates are continuously moving and colliding with each other",
+    " how the Earth's lithosphere is divided into several large plates that float on the semi-fluid asthenosphere underneath them. These plates are in constant motion, drifting apart, colliding with each other,",
+    " how the Earth's lithosphere is divided into several large plates that float on the semi-fluid asthenosphere beneath them. These plates are in constant motion, either moving apart at divergent boundaries, coll"
+   ],
+   "6": [
+    " began to focus on humanism, capturing the beauty and complexity of the human form in their artwork. This shift in artistic style represented a departure from the religious themes of the Middle Ages and a newfound appreciation",
+    " began to focus on humanism and depicting the natural world with greater accuracy. This shift in artistic style led to the development of perspective and depth in paintings, as well as a greater emphasis on individualism",
+    " began to explore new techniques and styles in their artwork. They were inspired by the classical art of ancient Greece and Rome, and sought to create realistic and anatomically accurate representations of the human form. This",
+    " were inspired by the revival of classical art and literature, leading to a renewed interest in humanism and the study of the natural world. This period saw the flourishing of iconic artists such as Leonardo da Vinci",
+    " experimented with new techniques and captured the beauty and complexity of the world around them. They were inspired by the human form, nature, and classical mythology, and their works often reflected the ideals of the time",
+    " experimented with innovative techniques and ideas, pushing the boundaries of traditional art. They were inspired by the human body and nature, seeking to capture the complexity and beauty of the world around them. This period saw"
+   ],
+   "7": [
+    " the body against infections and foreign invaders in a complex and intricate way. It is made up of a network of cells, tissues, and organs that work together to identify and eliminate harmful pathogens, such as",
+    " the body against harmful foreign invaders such as viruses, bacteria, and other pathogens. It is a complex network of cells, tissues, and organs that work together to keep the body healthy and functioning properly.",
+    " the body against harmful invaders such as bacteria, viruses, fungi, and parasites. It is a complex network of cells, tissues, and organs that work together to identify, attack, and destroy any foreign",
+    " the body against harmful invaders such as bacteria, viruses, and parasites. Without a properly functioning immune system, the body would be vulnerable to various infections and illnesses. The immune system is able to recognize and",
+    " the body against harmful pathogens such as bacteria, viruses, and parasites. It is a complex network of cells, tissues, and organs that work together to identify and destroy these invaders. When the immune system",
+    " the body against harmful pathogens such as viruses, bacteria, and fungi. It functions by recognizing and attacking foreign invaders that could cause illness or disease. The immune system is made up of a complex network of"
+   ]
+  }
+ }
+}
