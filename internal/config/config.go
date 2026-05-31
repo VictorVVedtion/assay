@@ -27,6 +27,19 @@ type Config struct {
 	// declared here only so the SHARED assay.yaml passes strict parsing; the Go
 	// side ignores its contents.
 	Analyzer map[string]any `yaml:"analyzer"`
+
+	// Probe configures the Phase 1 probe plane (`assay calibrate` / `assay probe`).
+	Probe Probe `yaml:"probe"`
+}
+
+// Probe configures synthetic model-identity probe batches (PHASE0.md Phase 1).
+type Probe struct {
+	PromptPool  string  `yaml:"prompt_pool"`   // path to newline-delimited prompts; empty = built-in
+	M           int     `yaml:"m"`             // distinct prompts per batch (default = pool size)
+	N           int     `yaml:"n"`             // completions per prompt (default 6)
+	MaxTokens   int     `yaml:"max_tokens"`    // per completion (default 40)
+	Temperature float64 `yaml:"temperature"`   // default 1.0; MUST be >0 for MMD
+	JitterMaxMs int     `yaml:"jitter_max_ms"` // dispatch jitter upper bound (default 250)
 }
 
 // Upstream is one relay/中转站 target. MVP uses exactly one; with one upstream

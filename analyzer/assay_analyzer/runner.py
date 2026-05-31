@@ -21,10 +21,13 @@ import time
 from typing import Any, Iterator
 
 from . import evidence as ev
+from . import probe as probe_mod
+from . import reference as ref_mod
 from .checks import (
     CacheReplayState,
     check_cache_replay,
     check_exposure,
+    check_model_identity,
     check_provenance,
     check_throughput,
     check_token_recount,
@@ -38,8 +41,10 @@ def derive_verdicts(
     *,
     stamp_ts: bool = False,
 ) -> Iterator[dict]:
-    """Run all checks over records in order, yielding verdicts. Deterministic
-    except for the optional ts stamp (kept out of the reproducible identity)."""
+    """Run all per-record checks over records in order, yielding verdicts.
+    Deterministic except for the optional ts stamp (kept out of the reproducible
+    identity). PROBE records are skipped here — they are synthetic, not the
+    buyer's real traffic, and are consumed as a batch by model_identity."""
     tr_cfg = cfg.get("token_recount", {})
     cr_cfg = cfg.get("cache_replay", {})
     tp_cfg = cfg.get("throughput", {})
@@ -47,6 +52,8 @@ def derive_verdicts(
     ex_cfg = cfg.get("exposure", {})
 
     for rec in records:
+        if probe_mod.is_probe(rec):
+            continue  # synthetic probe — handled by derive_batch_verdicts
         verdicts = [
             check_token_recount(rec, tr_cfg),
             check_provenance(rec, pv_cfg),
@@ -60,12 +67,53 @@ def derive_verdicts(
             yield v
 
 
-def replay(evidence_path: str, cfg: dict[str, Any]) -> list[dict]:
-    """Re-derive all verdicts from scratch (in-memory cache index)."""
+def _resolve_reference(batch: dict[str, Any], references: dict[str, dict]) -> dict | None:
+    """Find the reference(s) matching a probe batch's model. Returns the MMD
+    reference mapping {precision_label: {prompt_id: [text,...]}} or None.
+
+    references: {ref_name: loaded_reference_blob}. A batch matches a reference by
+    model name; multiple precisions of the same model compose the composite null.
+    """
+    model = batch.get("model")
+    matched = {}
+    for name, blob in references.items():
+        if blob.get("model") == model:
+            label = blob.get("precision", name)
+            matched[label] = ref_mod.reference_samples(blob)
+    return matched or None
+
+
+def derive_batch_verdicts(
+    records: list[dict],
+    cfg: dict[str, Any],
+    references: dict[str, dict],
+    *,
+    stamp_ts: bool = False,
+) -> Iterator[dict]:
+    """Group probe records into batches and emit one model_identity verdict per
+    batch. Deterministic given the same records + references."""
+    mi_cfg = cfg.get("model_identity", {})
+    batches = probe_mod.group_probe_batches(records)
+    for set_id in sorted(batches):
+        batch = batches[set_id]
+        batch["reference"] = _resolve_reference(batch, references)
+        v = check_model_identity(batch, mi_cfg)
+        if stamp_ts:
+            v["ts"] = _now_iso()
+        yield v
+
+
+def replay(evidence_path: str, cfg: dict[str, Any],
+           references: dict[str, dict] | None = None) -> list[dict]:
+    """Re-derive all verdicts from scratch (in-memory cache index). Includes
+    batch model_identity verdicts when references are provided."""
     cache_state = CacheReplayState(":memory:")
     try:
-        records = ev.iter_evidence(evidence_path, verify=True)
-        return list(derive_verdicts(records, cfg, cache_state, stamp_ts=False))
+        records = list(ev.iter_evidence(evidence_path, verify=True))
+        out = list(derive_verdicts(iter(records), cfg, cache_state, stamp_ts=False))
+        if any(probe_mod.is_probe(r) for r in records):
+            out.extend(derive_batch_verdicts(records, cfg, references or {}, stamp_ts=False))
+        return out
     finally:
         cache_state.close()
 

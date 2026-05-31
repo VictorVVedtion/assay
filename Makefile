@@ -20,6 +20,7 @@ test-py:
 	PYTHONPATH=analyzer $(PY) analyzer/tests/test_provenance.py
 	PYTHONPATH=analyzer $(PY) analyzer/tests/test_exposure.py
 	PYTHONPATH=analyzer $(PY) analyzer/tests/test_model_identity.py
+	PYTHONPATH=analyzer $(PY) analyzer/tests/test_probe_pipeline.py
 
 # Regenerate the shared Go<->Python digest golden vectors (run after a schema
 # change; commit the result). Python then verifies against them in test-py.
@@ -31,6 +32,10 @@ vectors:
 # are caught and the evidence chain verifies.
 e2e:
 	PY=$(PY) bash scripts/e2e.sh
+
+# Phase 1 end-to-end: calibrate -> probe (honest + swapped) -> model_identity.
+e2e-phase1:
+	PY=$(PY) bash scripts/e2e_phase1.sh
 
 vet:
 	go vet ./...

@@ -47,10 +47,24 @@ def main(argv: list[str] | None = None) -> int:
     p_replay.add_argument("--evidence", required=True)
     p_replay.add_argument("--config", help="optional config for check tuning")
     p_replay.add_argument("--out", help="write verdicts JSONL here (default stdout)")
+    p_replay.add_argument("--reference", action="append", default=[],
+                          help="path to a model_identity reference blob (repeatable); "
+                               "enables model_identity batch verdicts on probe records")
 
     p_report = sub.add_parser("report", help="render a scorecard from verdicts")
     p_report.add_argument("--verdicts", required=True)
     p_report.add_argument("--evidence", help="also verify the evidence chain")
+
+    p_buildref = sub.add_parser("build-reference",
+                                help="assemble a model_identity reference from probe evidence")
+    p_buildref.add_argument("--evidence", required=True, help="probe-tagged evidence.jsonl")
+    p_buildref.add_argument("--out", required=True, help="reference blob output path")
+    p_buildref.add_argument("--model", required=True)
+    p_buildref.add_argument("--prompt-pool", required=True, help="newline-delimited prompt pool")
+    p_buildref.add_argument("--temperature", type=float, default=1.0)
+    p_buildref.add_argument("--max-tokens", type=int, default=40)
+    p_buildref.add_argument("--n", type=int, default=6)
+    p_buildref.add_argument("--precision", default="reference")
 
     args = parser.parse_args(argv)
 
@@ -65,9 +79,15 @@ def main(argv: list[str] | None = None) -> int:
 
         cfg = _load_config(args.config) if args.config else {
             "token_recount": {}, "cache_replay": {}, "throughput": {},
-            "provenance": {}, "exposure": {},
+            "provenance": {}, "exposure": {}, "model_identity": {},
         }
-        verdicts = replay(args.evidence, cfg)
+        references = {}
+        if args.reference:
+            from .reference import load_reference
+
+            for rp in args.reference:
+                references[rp] = load_reference(rp)
+        verdicts = replay(args.evidence, cfg, references)
         out = open(args.out, "w", encoding="utf-8") if args.out else sys.stdout
         try:
             for v in verdicts:
@@ -92,6 +112,33 @@ def main(argv: list[str] | None = None) -> int:
             except ChainError:
                 chain_status = "BREAK"
         print(build_report(load_verdicts(args.verdicts), chain_status=chain_status))
+        return 0
+
+    if args.cmd == "build-reference":
+        from .evidence import iter_evidence
+        from .probe import group_probe_batches
+        from .reference import build_reference, save_reference
+
+        prompts = [ln.strip() for ln in open(args.prompt_pool, encoding="utf-8")
+                   if ln.strip()]
+        records = list(iter_evidence(args.evidence, verify=True))
+        batches = group_probe_batches(records)
+        if not batches:
+            print("build-reference: no probe records found in evidence", file=sys.stderr)
+            return 1
+        # Merge all batches' samples (a calibrate run is normally one batch).
+        merged: dict[int, list[str]] = {}
+        for b in batches.values():
+            for pid, comps in b["samples"].items():
+                merged.setdefault(pid, []).extend(comps)
+        blob = build_reference(
+            provider="openai", model=args.model, prompts=prompts, samples=merged,
+            temperature=args.temperature, max_tokens=args.max_tokens, n=args.n,
+            precision=args.precision)
+        save_reference(blob, args.out)
+        total = sum(len(v) for v in merged.values())
+        print(f"build-reference: wrote {args.out} — {len(merged)} prompts, {total} samples "
+              f"for {args.model}", file=sys.stderr)
         return 0
 
     return 1

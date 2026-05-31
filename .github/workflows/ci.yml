@@ -55,6 +55,8 @@ jobs:
         run: PYTHONPATH=analyzer python analyzer/tests/test_exposure.py
       - name: model_identity tests (MMD vs real OpenAI ground-truth fixture)
         run: PYTHONPATH=analyzer python analyzer/tests/test_model_identity.py
+      - name: probe-pipeline tests (batch model_identity wiring)
+        run: PYTHONPATH=analyzer python analyzer/tests/test_probe_pipeline.py
 
   digest-parity:
     name: Go writes vectors, Python verifies (cross-impl gate)
