@@ -67,20 +67,22 @@ def derive_verdicts(
             yield v
 
 
-def _resolve_reference(batch: dict[str, Any], references: dict[str, dict]) -> dict | None:
-    """Find the reference(s) matching a probe batch's model. Returns the MMD
-    reference mapping {precision_label: {prompt_id: [text,...]}} or None.
+def _resolve_reference(batch: dict[str, Any], references: dict[str, dict]):
+    """Find the reference(s) matching a probe batch's model. Returns
+    (samples_by_label, blobs_by_label) where samples feeds MMD and blobs feeds
+    the param-binding guard, or (None, {}).
 
-    references: {ref_name: loaded_reference_blob}. A batch matches a reference by
-    model name; multiple precisions of the same model compose the composite null.
+    references: {ref_name: loaded_reference_blob}. A batch matches by model name;
+    multiple precisions of the same model compose the composite null.
     """
     model = batch.get("model")
-    matched = {}
+    samples, blobs = {}, {}
     for name, blob in references.items():
         if blob.get("model") == model:
             label = blob.get("precision", name)
-            matched[label] = ref_mod.reference_samples(blob)
-    return matched or None
+            samples[label] = ref_mod.reference_samples(blob)
+            blobs[label] = blob
+    return (samples or None), blobs
 
 
 def derive_batch_verdicts(
@@ -91,12 +93,27 @@ def derive_batch_verdicts(
     stamp_ts: bool = False,
 ) -> Iterator[dict]:
     """Group probe records into batches and emit one model_identity verdict per
-    batch. Deterministic given the same records + references."""
+    batch. Deterministic given the same records + references.
+
+    The probe batch's own prompt-pool/sampling-params identity (for the binding
+    guard) is taken from cfg['probe'] when present — the same params the operator
+    ran `assay probe` with. If absent, the guard is skipped (the MMD still runs;
+    a param mismatch then shows up as distributional difference, not a clean
+    skip — so supplying probe params is recommended)."""
     mi_cfg = cfg.get("model_identity", {})
+    probe_cfg = cfg.get("probe", {}) or {}
+    probe_pool_hash = probe_cfg.get("prompt_pool_hash")
+    probe_params_hash = probe_cfg.get("sampling_params_hash")
     batches = probe_mod.group_probe_batches(records)
     for set_id in sorted(batches):
         batch = batches[set_id]
-        batch["reference"] = _resolve_reference(batch, references)
+        samples, blobs = _resolve_reference(batch, references)
+        batch["reference"] = samples
+        batch["reference_blobs"] = blobs
+        if probe_pool_hash:
+            batch["prompt_pool_hash"] = probe_pool_hash
+        if probe_params_hash:
+            batch["sampling_params_hash"] = probe_params_hash
         v = check_model_identity(batch, mi_cfg)
         if stamp_ts:
             v["ts"] = _now_iso()

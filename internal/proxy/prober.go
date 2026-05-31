@@ -118,21 +118,23 @@ func (p *Proxy) RunProbeBatch(ctx context.Context, spec ProbeSpec, authHeader, a
 
 			reqBody := buildChatRequest(spec.Model, prompt, spec.MaxTokens, spec.Temperature)
 			note := probeNote(spec.SetID, pid)
-			captured, ttftUs, totalUs, status, complete, connReused := p.fireOne(ctx, reqBody, authHeader, authValue)
+			res := p.fireOne(ctx, reqBody, authHeader, authValue)
 
 			rec := p.buildRecord(recordInput{
 				startWall: time.Now().UTC(), method: "POST", path: "/v1/chat/completions",
 				provider: provider, apiSurface: apiSurface,
 				reqHeaders: probeReqHeaders(authHeader), reqBody: reqBody,
-				respHeaders: nil, respBody: captured, respTotal: len(captured),
-				status: status, stream: false, complete: complete,
-				ttftUs: ttftUs, totalUs: totalUs, connReused: connReused,
+				respHeaders: nil, respBody: res.body, respTotal: res.total, respTrunc: res.truncated,
+				status: res.status, stream: false, complete: res.complete,
+				ttftUs: res.ttftUs, totalUs: res.totalUs, connReused: res.connReused,
 				teeOk: true, note: &note,
 			})
 			if !p.writer.Submit(rec) {
 				// queue full — drop (counted by writer), keep going
 			}
-			if complete && status == 200 {
+			// A truncated body would feed a SHORTENED completion into MMD; the
+			// analyzer skips truncated records, so don't count it as a usable sample.
+			if res.complete && res.status == 200 && !res.truncated {
 				ok++
 			}
 		}
@@ -140,16 +142,27 @@ func (p *Proxy) RunProbeBatch(ctx context.Context, spec ProbeSpec, authHeader, a
 	return ok, nil
 }
 
-// fireOne performs a single non-stream upstream request and returns the captured
-// body + timing. Errors are folded into (complete=false) — never panics.
-func (p *Proxy) fireOne(ctx context.Context, reqBody []byte, authHeader, authValue string) (
-	captured []byte, ttftUs, totalUs *uint64, status int, complete bool, connReused bool) {
+// probeResult is one probe completion's captured response + timing.
+type probeResult struct {
+	body            []byte
+	total           int
+	truncated       bool
+	ttftUs, totalUs *uint64
+	status          int
+	complete        bool
+	connReused      bool
+}
 
+// fireOne performs a single non-stream upstream request and returns the captured
+// body + timing. Errors are folded into (complete=false) — never panics. A body
+// exceeding max_body_bytes is captured up to the cap and marked truncated, so
+// the analyzer skips it rather than feeding a shortened completion into MMD.
+func (p *Proxy) fireOne(ctx context.Context, reqBody []byte, authHeader, authValue string) probeResult {
 	start := time.Now()
 	target := p.upstream.Target + "/v1/chat/completions"
 	req, err := http.NewRequestWithContext(ctx, "POST", target, bytes.NewReader(reqBody))
 	if err != nil {
-		return nil, nil, nil, http.StatusBadGateway, false, false
+		return probeResult{status: http.StatusBadGateway}
 	}
 	req.Header.Set("Content-Type", "application/json")
 	if p.cfg.StripAcceptEncoding {
@@ -163,17 +176,21 @@ func (p *Proxy) fireOne(ctx context.Context, reqBody []byte, authHeader, authVal
 
 	resp, err := p.client.Do(req)
 	if err != nil {
-		return nil, nil, nil, http.StatusBadGateway, false, false
+		return probeResult{status: http.StatusBadGateway}
 	}
 	defer resp.Body.Close()
-	connReused = false // httptrace omitted for probes; not needed for MMD
 
-	body, _ := io.ReadAll(io.LimitReader(resp.Body, int64(p.maxBody)))
+	// Read up to cap+1 so we can DETECT truncation (not just silently cap).
+	raw, _ := io.ReadAll(io.LimitReader(resp.Body, int64(p.maxBody)+1))
+	truncated := len(raw) > p.maxBody
+	total := len(raw)
+	if truncated {
+		raw = raw[:p.maxBody]
+	}
 	t := uint64(time.Since(start).Microseconds())
-	totalUs = &t
-	// ttft ~ total for a fully-read non-stream response; record nil to avoid
-	// implying a measurement we didn't take.
-	return body, nil, totalUs, resp.StatusCode, true, connReused
+	// ttft nil: not measured for probes (we don't imply a measurement we lack).
+	return probeResult{body: raw, total: total, truncated: truncated,
+		ttftUs: nil, totalUs: &t, status: resp.StatusCode, complete: true}
 }
 
 // buildChatRequest builds a minimal OpenAI-compatible chat request body.
@@ -190,8 +207,15 @@ func buildChatRequest(model, prompt string, maxTokens int, temp float64) []byte 
 
 // probeNote is the evidence tag the analyzer's probe.parse_probe_tag reads.
 // Format mirrors analyzer/assay_analyzer/probe.py make_probe_note EXACTLY.
+// set_id is sanitized so it cannot contain the ':' (field sep) or ';' (note
+// joiner) that would corrupt parsing; the Python side also splits prompt_id from
+// the right as defense in depth.
 func probeNote(setID string, promptID int) string {
-	return fmt.Sprintf("assay-probe:%s:%d", setID, promptID)
+	return fmt.Sprintf("assay-probe:%s:%d", sanitizeSetID(setID), promptID)
+}
+
+func sanitizeSetID(s string) string {
+	return strings.NewReplacer(":", "-", ";", "-", " ", "-").Replace(s)
 }
 
 // probeReqHeaders returns the header set recorded for a probe request. The auth

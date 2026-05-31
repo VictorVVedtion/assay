@@ -34,14 +34,17 @@ def parse_probe_tag(rec: dict) -> tuple[str, int] | None:
         frag = frag.strip()
         if frag.startswith(PROBE_PREFIX):
             rest = frag[len(PROBE_PREFIX):]
-            parts = rest.split(":")
-            if len(parts) >= 2:
-                set_id = parts[0]
-                try:
-                    prompt_id = int(parts[1])
-                except ValueError:
-                    return None
-                return set_id, prompt_id
+            # prompt_id is the LAST colon-separated field; split from the right so
+            # a set_id containing ':' still parses (the Go side also sanitizes
+            # set_id, but parse defensively here too).
+            head, _, last = rest.rpartition(":")
+            if not head:
+                return None
+            try:
+                prompt_id = int(last)
+            except ValueError:
+                return None
+            return head, prompt_id
     return None
 
 
@@ -78,8 +81,10 @@ def group_probe_batches(records: list[dict]) -> dict[str, dict[str, Any]]:
             "anchor_record": rec, "model": (rec.get("route") or {}).get("claimed_model"),
             "_anchor_seq": rec.get("seq"),
         })
-        # only count complete, successful probe responses
-        if not (rec.get("response") or {}).get("complete", False):
+        # only count complete, non-truncated, successful probe responses — a
+        # truncated body would feed a shortened completion into MMD.
+        resp = rec.get("response") or {}
+        if not resp.get("complete", False) or resp.get("truncated", False):
             continue
         text = _assistant_text(rec)
         if not text:

@@ -18,9 +18,13 @@ from typing import Any
 
 SCOPE_BANNER = (
     "SCOPE & HONEST LIMITS (read this -- a clean report is NOT a clean bill of health):\n"
-    "  - MODEL IDENTITY is NOT verified: a downgraded/quantized/tao-ke (套壳) model is\n"
-    "    not detected here (Phase 1: LLMmap / MMD). provenance only checks upstream\n"
-    "    headers, which are FORGEABLE -- 'consistent with', never 'proven genuine'.\n"
+    "  - MODEL IDENTITY is checked ONLY by active probes (model_identity, MMD): it needs\n"
+    "    a genuine reference (`assay calibrate`); with none it SKIPS. A flag means the\n"
+    "    distribution DIFFERS from the reference, NOT 'fraud' (benign quantization looks\n"
+    "    the same). It is an active-probe test -- a relay that serves the real model only\n"
+    "    to probes evades it -- and the reference is TRUSTED, not verified.\n"
+    "  - provenance only checks upstream headers, which are FORGEABLE -- 'consistent\n"
+    "    with', never 'proven genuine'.\n"
     "  - DATA EXPOSURE is MEASURED, not PREVENTED: assay CANNOT stop the relay reading\n"
     "    what you send (it must decrypt to forward -- the MITM reality). The exposure\n"
     "    count is a LOWER BOUND ('at least N'); zero detected != safe.\n"

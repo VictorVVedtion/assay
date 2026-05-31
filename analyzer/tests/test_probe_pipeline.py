@@ -101,6 +101,14 @@ def test_per_record_checks_skip_probes():
     assert per_record == [], f"probe records should be skipped by per-record checks, got {len(per_record)}"
 
 
+def test_probe_tag_parses_setid_with_colon_and_scrub_note():
+    # set_id with a ':' and an appended scrub note (';') must still parse; the
+    # prompt_id is the last field (rsplit), and the scrub note is ignored.
+    rec = {"capture": {"note": "assay-probe:run:2026:05:7; scrubbed 1 credential"}}
+    tag = probe_mod.parse_probe_tag(rec)
+    assert tag == ("run:2026:05", 7), tag
+
+
 def test_reference_param_mismatch_is_detectable():
     d = _fix()
     ref = _reference_blob("gpt-4o-mini", d["ref_A"]["samples"])
