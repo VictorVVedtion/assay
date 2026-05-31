@@ -49,6 +49,15 @@ _MSG_ID_ANTHROPIC = re.compile(r'"id"\s*:\s*"msg_[0-9A-Za-z]{8,}"')
 _CHATCMPL_ID_OPENAI = re.compile(r'"id"\s*:\s*"chatcmpl-[0-9A-Za-z]')
 _RESP_ID_OPENAI = re.compile(r'"id"\s*:\s*"resp_[0-9A-Za-z]')
 
+# Anti-markers: fields/shapes genuine upstreams NEVER emit. These are STRONGER
+# evidence than an absent header, because a faithful pass-through proxy returns
+# the upstream's envelope verbatim -- so a forbidden field proves the relay
+# REBUILT the response itself (a 套壳/masquerade tell). Grounded in a real relay
+# observed serving a native /v1/messages response with a plain-UUID `id` (not
+# msg_...) and a conversationId field that Anthropic's API never returns.
+_ANTHROPIC_NATIVE_ID_PRESENT = re.compile(r'"(?:id|message)"\s*:\s*"[a-f0-9]{8}-[a-f0-9]{4}-')  # UUID-shaped id
+_ANTHROPIC_FORBIDDEN_FIELDS = ("conversationId", "conversation_id")
+
 
 def _has_header_prefix(headers: dict, prefix: str) -> bool:
     return any(k.startswith(prefix) for k in headers)
@@ -83,6 +92,37 @@ def _openai_signals(h: dict, body: str) -> list[tuple[str, int, bool]]:
          bool(_CHATCMPL_ID_OPENAI.search(body) or _RESP_ID_OPENAI.search(body))),
         ("x-ratelimit-*-requests headers", 2, _has_header_prefix(h, "x-ratelimit-limit")),
     ]
+
+
+# Anti-marker detectors return a list of (description, present) — present=True
+# means a forbidden shape was seen (negative provenance evidence).
+def _anthropic_antimarkers(h: dict, body: str, body_obj: dict | None) -> list[str]:
+    hits = []
+    # genuine Anthropic /v1/messages id is "msg_..."; a UUID-shaped id where no
+    # msg_ id exists means the relay minted its own envelope.
+    if not _MSG_ID_ANTHROPIC.search(body) and _ANTHROPIC_NATIVE_ID_PRESENT.search(body):
+        hits.append("response 'id' is a UUID, not Anthropic's native msg_ format (envelope rebuilt by relay)")
+    for f in _ANTHROPIC_FORBIDDEN_FIELDS:
+        if body_obj is not None and f in body_obj:
+            hits.append(f"response carries '{f}' which the genuine Anthropic API never returns")
+        elif body_obj is None and f'"{f}"' in body:
+            hits.append(f"response carries '{f}' which the genuine Anthropic API never returns")
+    return hits
+
+
+def _openai_antimarkers(h: dict, body: str, body_obj: dict | None) -> list[str]:
+    hits = []
+    # OpenAI chat ids are chatcmpl-/resp-; a UUID id where neither exists is a tell.
+    if (not _CHATCMPL_ID_OPENAI.search(body) and not _RESP_ID_OPENAI.search(body)
+            and re.search(r'"id"\s*:\s*"[a-f0-9]{8}-[a-f0-9]{4}-', body)):
+        hits.append("response 'id' is a UUID, not OpenAI's chatcmpl-/resp- format (envelope rebuilt by relay)")
+    return hits
+
+
+_ANTIMARKERS = {
+    "anthropic": _anthropic_antimarkers,
+    "openai": _openai_antimarkers,
+}
 
 
 def _gemini_signals(h: dict, body: str) -> list[tuple[str, int, bool]]:
@@ -179,10 +219,26 @@ def check_provenance(rec: dict, cfg: dict[str, Any] | None = None) -> Verdict:
     score = sum(w for (_, w) in present)
     max_score = sum(w for (_, w, _) in signals)
 
+    # Anti-markers: forbidden fields/shapes that prove the relay REBUILT the
+    # envelope (stronger than absent headers, which a CDN can innocently strip).
+    antifn = _ANTIMARKERS.get(expected)
+    antimarkers = antifn(headers, body, body_obj) if antifn else []
+
     detail["signals_present"] = [n for (n, _) in present]
     detail["signals_absent"] = absent
+    detail["antimarkers"] = antimarkers
     detail["score"] = score
     detail["max_score"] = max_score
+
+    # Anti-markers dominate: a forbidden field is positive evidence of a rebuilt
+    # envelope, regardless of how many positive markers also appear.
+    if antimarkers:
+        return new_verdict(
+            rec, CHECK, "flag", "warn",
+            f"{expected} envelope REBUILT by relay: {antimarkers[0]} "
+            f"(positive masquerade tell -- a faithful proxy returns the upstream envelope "
+            f"verbatim; still not proof of which model served you -- escalate to Phase 1)",
+            detail)
 
     # Scoring bands (deliberately conservative; this is evidence, not proof).
     strong_floor = cfg.get("strong_floor", max(5, max_score // 2))
@@ -196,8 +252,8 @@ def check_provenance(rec: dict, cfg: dict[str, Any] | None = None) -> Verdict:
         return new_verdict(
             rec, CHECK, "flag", "warn",
             f"weak {expected} provenance (score {score}/{max_score}): some native markers "
-            f"missing -- relay may strip headers, or may not genuinely proxy {expected}. "
-            f"Corroborate with Phase 1 model fingerprinting.",
+            f"present but others missing -- relay may strip headers (e.g. behind a CDN), or "
+            f"may not genuinely proxy {expected}. Corroborate with Phase 1 model fingerprinting.",
             detail)
     return new_verdict(
         rec, CHECK, "flag", "warn",
