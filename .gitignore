@@ -26,3 +26,13 @@ build/
 .idea/
 .vscode/
 *.swp
+
+# web/ frontend (maintained separately) — never commit its deps/build/secrets
+# even if added from the repo root. The frontend's own .gitignore also covers these.
+web/node_modules/
+web/.next/
+web/out/
+web/build/
+**/.env
+**/.env.*
+!**/.env.example
