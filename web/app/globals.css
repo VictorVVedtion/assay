@@ -1,0 +1,444 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   assay · 照妖镜 — Live Audit Console · forensic design system
+   ----------------------------------------------------------------------------
+   "Evidence, not opinion." Dark, calm, dense, precise. The console is quiet
+   until there is something to see. Color earns attention only on warn /
+   critical / tamper. ONE restrained cool accent (the mirror's glint).
+
+   All visual decisions are tokens here so feature agents stay cohesive.
+   Machine data (hashes, seq, ids, tokens, bytes, timings, fingerprints) is
+   mono + tabular-nums; prose is sans.
+   ========================================================================== */
+
+:root {
+  color-scheme: dark;
+
+  /* --- base surfaces (near-black, layered) --- */
+  --bg: #07090d;              /* page backdrop, deepest */
+  --panel: #0a0e14;           /* default panel */
+  --panel-2: #0f141c;         /* elevated panel / drawer / header */
+  --panel-3: #131a24;         /* hover / active row, inset wells */
+  --inset: #060810;           /* code wells, mono blocks */
+
+  /* --- hairlines & borders --- */
+  --line: #1c2330;            /* default 1px hairline */
+  --line-soft: #161c27;       /* quieter divider */
+  --line-strong: #29323f;     /* emphasized border (focus-adjacent) */
+
+  /* --- text --- */
+  --text: #d6dde6;            /* primary text */
+  --text-dim: #8b97a6;        /* secondary / labels */
+  --text-faint: #5a6675;      /* tertiary / captions, units */
+  --text-ghost: #3c4654;      /* watermark / disabled */
+
+  /* --- the one accent: cyan/teal "the mirror's glint" --- */
+  --accent: #4fd6c8;
+  --accent-bright: #6ff0e2;   /* hover / live emphasis */
+  --accent-dim: #2f8a82;      /* muted accent (borders, idle dot) */
+  --accent-ghost: rgba(79, 214, 200, 0.12); /* faint fills / focus ring bg */
+  --accent-ring: rgba(79, 214, 200, 0.45);  /* focus outline */
+
+  /* --- severity palette: the ONLY source of strong color --- */
+  /* ok / info — calm slate-teal, NOT a triumphant green */
+  --sev-ok: #6fb6ac;
+  --sev-ok-bg: rgba(111, 182, 172, 0.10);
+  --sev-ok-border: rgba(111, 182, 172, 0.28);
+  /* info — neutral cool */
+  --sev-info: #7f95ad;
+  --sev-info-bg: rgba(127, 149, 173, 0.10);
+  --sev-info-border: rgba(127, 149, 173, 0.26);
+  /* skip — DIM gray, "napping", never red. ~45% presence. */
+  --sev-skip: #5c6573;
+  --sev-skip-bg: rgba(92, 101, 115, 0.07);
+  --sev-skip-border: rgba(92, 101, 115, 0.20);
+  /* warn — amber */
+  --sev-warn: #f5a623;
+  --sev-warn-bg: rgba(245, 166, 35, 0.11);
+  --sev-warn-border: rgba(245, 166, 35, 0.34);
+  /* critical — red */
+  --sev-critical: #ff5d5d;
+  --sev-critical-bg: rgba(255, 93, 93, 0.12);
+  --sev-critical-border: rgba(255, 93, 93, 0.40);
+  /* tamper — intensified red (chain BREAK); pairs with a slow pulse */
+  --sev-tamper: #ff3b3b;
+  --sev-tamper-bg: rgba(255, 59, 59, 0.16);
+  --sev-tamper-border: rgba(255, 59, 59, 0.62);
+  --sev-tamper-glow: rgba(255, 59, 59, 0.35);
+
+  /* error (analyzer could not run) — muted violet-gray, distinct from warn */
+  --sev-error: #b58bd6;
+  --sev-error-bg: rgba(181, 139, 214, 0.10);
+  --sev-error-border: rgba(181, 139, 214, 0.28);
+
+  /* --- provider chips --- */
+  --prov-openai: #19c37d;      /* green */
+  --prov-openai-bg: rgba(25, 195, 125, 0.12);
+  --prov-anthropic: #d08c5e;   /* warm clay/orange */
+  --prov-anthropic-bg: rgba(208, 140, 94, 0.13);
+  --prov-gemini: #5b9bf5;      /* blue */
+  --prov-gemini-bg: rgba(91, 155, 245, 0.13);
+  --prov-unknown: #6b7585;     /* gray */
+  --prov-unknown-bg: rgba(107, 117, 133, 0.12);
+
+  /* --- font stacks --- *
+   * Local-only, hermetic: no webfont fetch at build or runtime. Geist names
+   * are listed first so they resolve if the OS has them, then graceful system
+   * fallbacks. Honors the project's privacy / self-host ethos. */
+  --font-sans: "Geist Sans", "Inter", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", "JetBrains Mono",
+    "Roboto Mono", "Menlo", "Consolas", "Liberation Mono", monospace;
+
+  /* --- type scale (compact, machine-data ~12.5px base) --- */
+  --fs-data: 12.5px;          /* base table / data size */
+  --fs-data-sm: 11px;         /* dense secondary data */
+  --fs-micro: 10px;           /* unit labels, chip text */
+  --fs-body: 13.5px;          /* prose */
+  --fs-h: 15px;               /* panel headings */
+  --fs-stat: 22px;            /* stat tile big number */
+
+  /* --- radii / shadow / spacing rhythm --- */
+  --r-sm: 4px;
+  --r: 6px;
+  --r-lg: 9px;
+  --shadow-panel: 0 1px 0 0 rgba(255, 255, 255, 0.02) inset,
+    0 8px 24px -16px rgba(0, 0, 0, 0.8);
+  --shadow-drawer: -16px 0 48px -20px rgba(0, 0, 0, 0.85);
+
+  /* legacy aliases kept so the scaffold's `bg-background` / `text-foreground`
+     utilities still resolve to the forensic theme. */
+  --background: var(--bg);
+  --foreground: var(--text);
+}
+
+/* Expose tokens to Tailwind v4's utility generator + theme(). Feature agents
+   can use bg-panel, text-dim, border-line, text-accent, font-mono, etc. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-panel-3: var(--panel-3);
+  --color-inset: var(--inset);
+
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-line-strong: var(--line-strong);
+
+  --color-text: var(--text);
+  --color-dim: var(--text-dim);
+  --color-faint: var(--text-faint);
+  --color-ghost: var(--text-ghost);
+
+  --color-accent: var(--accent);
+  --color-accent-bright: var(--accent-bright);
+  --color-accent-dim: var(--accent-dim);
+
+  --color-ok: var(--sev-ok);
+  --color-info: var(--sev-info);
+  --color-skip: var(--sev-skip);
+  --color-warn: var(--sev-warn);
+  --color-critical: var(--sev-critical);
+  --color-tamper: var(--sev-tamper);
+  --color-sev-error: var(--sev-error);
+
+  --color-openai: var(--prov-openai);
+  --color-anthropic: var(--prov-anthropic);
+  --color-gemini: var(--prov-gemini);
+  --color-unknown: var(--prov-unknown);
+
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  --radius-sm: var(--r-sm);
+  --radius: var(--r);
+  --radius-lg: var(--r-lg);
+}
+
+* {
+  border-color: var(--line);
+}
+
+html {
+  height: 100%;
+  background: var(--bg);
+}
+
+body {
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* faint vignette so panels read as floating on a forensic backdrop */
+  background-image: radial-gradient(
+    120% 80% at 50% -10%,
+    rgba(79, 214, 200, 0.035),
+    transparent 60%
+  );
+  background-attachment: fixed;
+}
+
+/* ---- typography utilities ---- */
+.font-mono,
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "zero" 1, "cv01" 1;
+}
+
+/* tabular-nums for any numeric cell, mono or not */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.data {
+  font-family: var(--font-mono);
+  font-size: var(--fs-data);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "zero" 1;
+}
+.data-sm { font-size: var(--fs-data-sm); }
+.micro {
+  font-size: var(--fs-micro);
+  letter-spacing: 0.04em;
+}
+
+/* uppercased label eyebrow used on panel headers / stat captions */
+.eyebrow {
+  font-size: var(--fs-micro);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  font-weight: 500;
+}
+
+/* ---- focus visibility (a11y; drawer + interactive primitives) ---- */
+:focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* ---- scrollbars: thin, forensic ---- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover { background: #38424f; background-clip: content-box; }
+
+/* ---- selection ---- */
+::selection {
+  background: var(--accent-ghost);
+  color: var(--accent-bright);
+}
+
+/* ============================================================================
+   Motion — minimal. New rows fade/slide in subtly; a faint scan-line glint on
+   the brand only; the tamper pulse is the one insistent animation.
+   ========================================================================== */
+@keyframes assay-row-in {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.row-in { animation: assay-row-in 0.28s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+
+@keyframes assay-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.fade-in { animation: assay-fade-in 0.22s ease both; }
+
+/* live dot breathing — slow, calm */
+@keyframes assay-pulse-dot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 var(--accent-ghost); }
+  50%      { opacity: 0.55; box-shadow: 0 0 0 4px transparent; }
+}
+.live-dot { animation: assay-pulse-dot 2.4s ease-in-out infinite; }
+
+/* TAMPER pulse — slow, ominous, unmistakable (chain BREAK only) */
+@keyframes assay-tamper-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 var(--sev-tamper-glow);
+    border-color: var(--sev-tamper-border);
+  }
+  50% {
+    box-shadow: 0 0 18px 1px var(--sev-tamper-glow);
+    border-color: var(--sev-tamper);
+  }
+}
+.tamper-pulse { animation: assay-tamper-pulse 2.2s ease-in-out infinite; }
+
+/* brand scan-line glint — sweeps once-ish, very faint */
+@keyframes assay-glint {
+  0%   { background-position: -120% 0; }
+  60%, 100% { background-position: 220% 0; }
+}
+.brand-glint {
+  background-image: linear-gradient(
+    100deg,
+    transparent 35%,
+    var(--accent-bright) 50%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: assay-glint 6.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row-in,
+  .fade-in,
+  .live-dot,
+  .tamper-pulse,
+  .brand-glint {
+    animation: none !important;
+  }
+  .brand-glint {
+    -webkit-text-fill-color: var(--accent);
+  }
+}
+
+/* ============================================================================
+   Component base classes — small, composable, token-driven. Primitives in
+   components/ui build on these; feature agents may also use them directly.
+   ========================================================================== */
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-panel);
+}
+.panel-2 { background: var(--panel-2); }
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  border-bottom: 1px solid var(--line-soft);
+  min-height: 38px;
+}
+.panel-title {
+  font-size: var(--fs-h);
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+/* hairline-bordered inset well for mono blobs */
+.well {
+  background: var(--inset);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r);
+}
+
+/* generic pill / badge base */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  padding: 0.12rem 0.46rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: var(--fs-micro);
+  line-height: 1.4;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  padding: 0.1rem 0.42rem;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* status dot */
+.dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  flex: none;
+}
+
+/* dense table conventions */
+.table-dense {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-data);
+}
+.table-dense th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--text-faint);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--line-soft);
+  position: sticky;
+  top: 0;
+  background: var(--panel);
+  z-index: 1;
+}
+.table-dense td {
+  padding: 0.34rem 0.6rem;
+  border-bottom: 1px solid var(--line-soft);
+  vertical-align: top;
+}
+.table-dense tbody tr {
+  transition: background 0.12s ease;
+}
+.table-dense tbody tr:hover { background: var(--panel-3); }
+.table-dense tbody tr[data-selected="true"] {
+  background: var(--accent-ghost);
+  box-shadow: inset 2px 0 0 0 var(--accent);
+}
+
+/* muted, "napping" treatment for skipped things */
+.is-skip {
+  opacity: 0.55;
+}
+
+/* subtle link */
+.link {
+  color: var(--accent);
+  text-decoration: none;
+  cursor: pointer;
+}
+.link:hover { color: var(--accent-bright); text-decoration: underline; }
+
+/* truncate helper */
+.truncate-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
