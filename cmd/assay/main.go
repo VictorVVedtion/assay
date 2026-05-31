@@ -45,6 +45,10 @@ func main() {
 		runProbe(os.Args[2:], true)
 	case "probe":
 		runProbe(os.Args[2:], false)
+	case "key":
+		runKey(os.Args[2:])
+	case "reference":
+		runReference(os.Args[2:])
 	case "version", "-v", "--version":
 		fmt.Println("assay", version)
 	case "help", "-h", "--help":
@@ -247,6 +251,9 @@ usage:
   assay verify     --evidence evidence.jsonl          verify the evidence hash chain
   assay calibrate  --model M --key-env OFFICIAL_KEY   build a genuine model reference (Phase 1)
   assay probe      --model M                          probe the relay under audit (Phase 1)
+  assay key gen    --out signer                       generate an Ed25519 signer keypair (Phase 2)
+  assay reference sign   --reference R --key K        sign a genuine reference fingerprint (Phase 2)
+  assay reference verify --statement S [--reference R] verify a signed reference statement (Phase 2)
   assay version                                        print version
 
 The analysis plane is the separate assay-analyzer (Python) tool.

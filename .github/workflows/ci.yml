@@ -57,6 +57,8 @@ jobs:
         run: PYTHONPATH=analyzer python analyzer/tests/test_model_identity.py
       - name: probe-pipeline tests (batch model_identity wiring)
         run: PYTHONPATH=analyzer python analyzer/tests/test_probe_pipeline.py
+      - name: registry tests (Python verifies Go-signed Ed25519 statements)
+        run: PYTHONPATH=analyzer python analyzer/tests/test_registry.py
 
   digest-parity:
     name: Go writes vectors, Python verifies (cross-impl gate)
@@ -72,7 +74,11 @@ jobs:
           python-version: "3.11"
       - name: regenerate digest vectors from Go
         run: UPDATE_VECTORS=1 go test ./internal/evidence/ -run TestDigestVectors -count=1
-      - name: Python must reproduce them byte-for-byte
+      - name: regenerate registry signing vectors from Go
+        run: UPDATE_VECTORS=1 go test ./internal/registry/ -run TestEmitVectors -count=1
+      - name: Python must reproduce digest vectors byte-for-byte
         run: python analyzer/tests/test_digest.py
+      - name: Python must verify Go-signed registry vectors
+        run: PYTHONPATH=analyzer python analyzer/tests/test_registry.py
       - name: vectors must be unchanged (committed == generated)
-        run: git diff --exit-code testdata/digest_vectors.json
+        run: git diff --exit-code testdata/digest_vectors.json testdata/registry_vectors.json

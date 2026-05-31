@@ -27,6 +27,9 @@ build/
 .vscode/
 *.swp
 
+# Claude Code review-harness temp files (e.g. .claude-tmp-review.js)
+.claude-tmp-*
+
 # web/ frontend (maintained separately) — never commit its deps/build/secrets
 # even if added from the repo root. The frontend's own .gitignore also covers these.
 web/node_modules/

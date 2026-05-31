@@ -1,5 +1,5 @@
 # assay (照妖镜) — dev entry points
-.PHONY: all build test test-go test-py vectors e2e clean fmt vet
+.PHONY: all build test test-go test-py vectors e2e clean fmt vet dashboard dashboard-build
 
 PY ?= python3
 
@@ -21,6 +21,7 @@ test-py:
 	PYTHONPATH=analyzer $(PY) analyzer/tests/test_exposure.py
 	PYTHONPATH=analyzer $(PY) analyzer/tests/test_model_identity.py
 	PYTHONPATH=analyzer $(PY) analyzer/tests/test_probe_pipeline.py
+	PYTHONPATH=analyzer $(PY) analyzer/tests/test_registry.py
 
 # Regenerate the shared Go<->Python digest golden vectors (run after a schema
 # change; commit the result). Python then verifies against them in test-py.
@@ -42,6 +43,15 @@ vet:
 
 fmt:
 	go fmt ./...
+
+# Live Audit Console (照妖镜 dashboard) — Next.js app in web/. Reads ./data
+# directly (no network). Defaults to Demo when data/*.jsonl are empty, Live
+# otherwise. Override the data dir with ASSAY_DATA_DIR. First run installs deps.
+dashboard:
+	cd web && npm install && npm run dev
+
+dashboard-build:
+	cd web && npm install && npm run build
 
 clean:
 	rm -rf bin/ data/*.jsonl data/*.checkpoint data/*.status data/*.sqlite
