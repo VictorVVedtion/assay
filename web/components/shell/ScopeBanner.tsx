@@ -22,7 +22,11 @@ import { useScopeTampered } from "@/lib/hooks";
 import { SCOPE_BANNER } from "@/lib/constants";
 
 export function ScopeBanner() {
-  const [collapsed, setCollapsed] = useState(false);
+  // Default COLLAPSED: the banner leads the UI and is never removable, but the
+  // dashboard should open on DATA, not a wall of disclaimer. Collapsed still
+  // shows the headline + one-line summary (the mandate is "always visible", not
+  // "always expanded"). Tamper forces it open.
+  const [collapsed, setCollapsed] = useState(true);
   const tampered = useScopeTampered();
 
   return (

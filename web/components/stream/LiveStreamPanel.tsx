@@ -257,14 +257,14 @@ function Row({
       </td>
 
       {/* method + path */}
-      <td style={{ maxWidth: 230 }}>
+      <td style={{ maxWidth: 196 }}>
         <span className="inline-flex items-baseline gap-1.5 min-w-0">
           <span className="mono data-sm" style={{ color: "var(--text-faint)" }}>
             {route.method}
           </span>
           <span
             className="mono data-sm truncate-ellipsis"
-            style={{ color: "var(--text)", maxWidth: 180, display: "inline-block", verticalAlign: "bottom" }}
+            style={{ color: "var(--text)", maxWidth: 148, display: "inline-block", verticalAlign: "bottom" }}
             title={route.path}
           >
             {fmtPath(route.path)}

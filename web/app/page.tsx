@@ -40,24 +40,24 @@ export default function ConsolePage() {
 
   return (
     <div className="h-full overflow-auto">
-      <div className="mx-auto w-full max-w-[1680px] p-3 flex flex-col gap-3">
+      <div className="mx-auto w-full max-w-[1680px] p-4 flex flex-col gap-4">
         {/* live counters across the top */}
         <StatRow />
 
         {/* primary grid: stream + verdict cards + chain */}
-        <div className="grid gap-3 grid-cols-1 xl:grid-cols-12">
+        <div className="grid gap-4 grid-cols-1 xl:grid-cols-12">
           {/* left: the live evidence stream (large) */}
-          <div className="xl:col-span-8 min-w-0 flex flex-col gap-3">
+          <div className="xl:col-span-8 min-w-0 flex flex-col gap-4">
             <LiveStreamPanel />
             {/* metrics + flags side by side under the stream */}
-            <div className="grid gap-3 grid-cols-1 lg:grid-cols-2 min-w-0">
+            <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 min-w-0">
               <MetricsPanel />
               <FlagsFeed />
             </div>
           </div>
 
           {/* right rail: the five checks, chain viz, onboarding */}
-          <div className="xl:col-span-4 min-w-0 flex flex-col gap-3">
+          <div className="xl:col-span-4 min-w-0 flex flex-col gap-4">
             <ChecksPanel />
             <ChainPanel />
             <DemoLiveExplainer />

@@ -15,17 +15,20 @@
 :root {
   color-scheme: dark;
 
-  /* --- base surfaces (near-black, layered) --- */
-  --bg: #07090d;              /* page backdrop, deepest */
-  --panel: #0a0e14;           /* default panel */
-  --panel-2: #0f141c;         /* elevated panel / drawer / header */
-  --panel-3: #131a24;         /* hover / active row, inset wells */
-  --inset: #060810;           /* code wells, mono blocks */
+  /* --- base surfaces (near-black, layered) --- *
+   * Surfaces are spaced apart in luminance so panels read as distinctly
+   * floating on the backdrop — depth is what makes the console feel "designed"
+   * rather than a flat wall of near-black. */
+  --bg: #05070b;              /* page backdrop, deepest */
+  --panel: #0c1119;           /* default panel */
+  --panel-2: #111824;         /* elevated panel / drawer / header */
+  --panel-3: #18212e;         /* hover / active row, inset wells */
+  --inset: #070a10;           /* code wells, mono blocks */
 
   /* --- hairlines & borders --- */
-  --line: #1c2330;            /* default 1px hairline */
-  --line-soft: #161c27;       /* quieter divider */
-  --line-strong: #29323f;     /* emphasized border (focus-adjacent) */
+  --line: #222b3a;            /* default 1px hairline */
+  --line-soft: #19212d;       /* quieter divider */
+  --line-strong: #313c4c;     /* emphasized border (focus-adjacent) */
 
   /* --- text --- */
   --text: #d6dde6;            /* primary text */
@@ -98,14 +101,15 @@
   --fs-micro: 10px;           /* unit labels, chip text */
   --fs-body: 13.5px;          /* prose */
   --fs-h: 15px;               /* panel headings */
-  --fs-stat: 22px;            /* stat tile big number */
+  --fs-stat: 27px;            /* stat tile big number — anchors the headline KPIs */
 
   /* --- radii / shadow / spacing rhythm --- */
   --r-sm: 4px;
-  --r: 6px;
-  --r-lg: 9px;
-  --shadow-panel: 0 1px 0 0 rgba(255, 255, 255, 0.02) inset,
-    0 8px 24px -16px rgba(0, 0, 0, 0.8);
+  --r: 7px;
+  --r-lg: 11px;
+  /* a top sheen + a real drop shadow so panels lift off the backdrop */
+  --shadow-panel: 0 1px 0 0 rgba(255, 255, 255, 0.03) inset,
+    0 1px 2px 0 rgba(0, 0, 0, 0.4), 0 12px 32px -18px rgba(0, 0, 0, 0.9);
   --shadow-drawer: -16px 0 48px -20px rgba(0, 0, 0, 0.85);
 
   /* legacy aliases kept so the scaffold's `bg-background` / `text-foreground`
@@ -292,17 +296,21 @@ body {
   60%, 100% { background-position: 220% 0; }
 }
 .brand-glint {
+  /* Base is a solid accent so the brand is ALWAYS legible; the brighter band
+     sweeps across as a highlight (the mirror's glint). Earlier this used
+     transparent stops, which left the wordmark invisible between sweeps. */
   background-image: linear-gradient(
     100deg,
-    transparent 35%,
+    var(--accent) 38%,
     var(--accent-bright) 50%,
-    transparent 65%
+    var(--accent) 62%
   );
   background-size: 220% 100%;
   background-repeat: no-repeat;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+  color: var(--accent);
   animation: assay-glint 6.5s ease-in-out infinite;
 }
 
@@ -316,6 +324,7 @@ body {
   }
   .brand-glint {
     -webkit-text-fill-color: var(--accent);
+    background-image: none;
   }
 }
 
@@ -442,3 +451,84 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ============================================================================
+   Visual polish round — KPI cards, calmer table, scorecard hierarchy.
+   Keeps the dark forensic system; adds depth + alignment + breathing room so
+   the console reads as a designed dashboard, not a flat data dump.
+   ========================================================================== */
+
+/* ---- KPI stat card (the top counters strip) ----
+   Each counter is its own carded surface so the row reads as distinct headline
+   KPIs rather than one undifferentiated band. */
+.kpi-card {
+  position: relative;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 11px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.kpi-card:hover { border-color: var(--line-strong); }
+/* leading accent rail marks the headline tile (evidence count). */
+.kpi-card[data-accent="true"] {
+  background:
+    linear-gradient(180deg, var(--accent-ghost), transparent 64px),
+    var(--panel-2);
+}
+.kpi-card[data-accent="true"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 11px;
+  bottom: 11px;
+  width: 2px;
+  border-radius: 0 2px 2px 0;
+  background: linear-gradient(var(--accent), var(--accent-dim));
+}
+/* warn/critical KPIs get a matching tinted edge so attention is earned. */
+.kpi-card[data-tone="warn"] { border-color: var(--sev-warn-border); }
+.kpi-card[data-tone="warn"]::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 11px; bottom: 11px;
+  width: 2px; border-radius: 0 2px 2px 0;
+  background: var(--sev-warn);
+}
+.kpi-card[data-tone="critical"] { border-color: var(--sev-critical-border); }
+.kpi-card[data-tone="critical"]::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 11px; bottom: 11px;
+  width: 2px; border-radius: 0 2px 2px 0;
+  background: var(--sev-critical);
+}
+
+/* dense table: cleaner header + a hair more breathing room, but STILL dense —
+   single-line rows (machine data never wraps) and a very subtle zebra so the
+   eye can track a row across columns. */
+.table-dense th {
+  padding: 0.44rem 0.38rem;
+  background: var(--panel-2);
+  white-space: nowrap;
+}
+.table-dense th:first-child { padding-left: 0.7rem; }
+.table-dense th:last-child { padding-right: 0.7rem; }
+.table-dense td {
+  padding: 0.42rem 0.38rem;
+  white-space: nowrap;        /* machine data stays on one line; no ttft wrap */
+  vertical-align: middle;
+}
+.table-dense td:first-child { padding-left: 0.7rem; }
+.table-dense td:last-child { padding-right: 0.7rem; }
+/* hairlines between rows only (not under the last row). */
+.table-dense tbody tr td { border-bottom: 0; }
+.table-dense tbody tr + tr td { border-top: 1px solid var(--line-soft); }
+/* zebra striping — extremely subtle, just enough to track a row across columns */
+.table-dense tbody tr:nth-child(even) td { background: rgba(255, 255, 255, 0.013); }
+.table-dense tbody tr:hover td { background: var(--panel-3); }
+.table-dense tbody tr[data-selected="true"] td { background: var(--accent-ghost); }
